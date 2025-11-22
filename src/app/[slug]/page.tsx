@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase'
-import { ThemeToggle } from '../components/ThemeToggle'
-import { ExperienceSection } from '../components/ExperienceSection'
-import { ResumeHeader } from '../components/ResumeHeader'
-import { ProfessionalSummary } from '../components/ProfessionalSummary'
-import { SkillsSection } from '../components/SkillsSection'
-import { SideProjects } from '../components/SideProjects'
-import { EducationSection } from '../components/EducationSection'
+import { ThemeToggle } from '../../components/ThemeToggle'
+import { ExperienceSection } from '../../components/ExperienceSection'
+import { ResumeHeader } from '../../components/ResumeHeader'
+import { ProfessionalSummary } from '../../components/ProfessionalSummary'
+import { SkillsSection } from '../../components/SkillsSection'
+import { SideProjects } from '../../components/SideProjects'
+import { EducationSection } from '../../components/EducationSection'
 
 interface ExperienceItem {
   company: string
@@ -49,15 +49,21 @@ interface Resume {
   updated_at: string
 }
 
-export async function generateMetadata(): Promise<Metadata> {
-  try {
-    const { data: resume } = await supabase
-      .from('resumes')
-      .select('name')
-      .limit(1)
-      .single()
+interface PageProps {
+  params: Promise<{ slug: string }>
+}
 
-    if (resume) {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+
+  try {
+    const { data: resumes } = await supabase
+      .from('resumes')
+      .select('name, slug')
+      .eq('slug', slug)
+
+    if (resumes && resumes.length > 0) {
+      const resume = resumes[0]
       return {
         title: `${resume.name} - Resume`,
         description: `Professional resume for ${resume.name}`
@@ -72,14 +78,13 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function Home() {
-  const defaultSlug = process.env.NEXT_PUBLIC_DEFAULT_RESUME_SLUG
+export default async function ResumePage({ params }: PageProps) {
+  const { slug } = await params
 
-  const { data: resume, error } = await supabase
+  const { data: resumes, error } = await supabase
     .from('resumes')
     .select('*')
-    .limit(1)
-    .single()
+    .eq('slug', slug)
 
   if (error) {
     return (
@@ -91,7 +96,7 @@ export default async function Home() {
     )
   }
 
-  if (!resume) {
+  if (!resumes || resumes.length === 0) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
@@ -100,6 +105,8 @@ export default async function Home() {
       </div>
     )
   }
+
+  const resume = resumes[0]
 
   const experiences: ExperienceItem[] = resume.experience || []
   const educations: EducationItem[] = resume.education || []
