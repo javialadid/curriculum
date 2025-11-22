@@ -68,6 +68,7 @@ export default function Chatbot({ resume }: ChatbotProps) {
   const [dataLoaded, setDataLoaded] = useState(false)
   const [isConversationEnded, setIsConversationEnded] = useState(false)
   const [chatId, setChatId] = useState<string | null>(null)
+  const [isHighlighted, setIsHighlighted] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const groqModel = process.env.NEXT_PUBLIC_GROQ_MODELNAME || 'llama-3.3-70b-versatile'
@@ -86,6 +87,24 @@ export default function Chatbot({ resume }: ChatbotProps) {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Highlight button every 15 seconds for 1 second (only when chat is closed)
+  useEffect(() => {
+    if (isOpen) {
+      // Clear any existing highlight when chat opens
+      setIsHighlighted(false)
+      return
+    }
+
+    const interval = setInterval(() => {
+      setIsHighlighted(true)
+      setTimeout(() => {
+        setIsHighlighted(false)
+      }, 1000) // Highlight for 1 second
+    }, 15000) // Every 15 seconds
+
+    return () => clearInterval(interval)
+  }, [isOpen])
 
   const loadChatbotData = async () => {
     console.log('🤖 Chatbot: [CLIENT] Requesting chatbot data from server...')
@@ -204,11 +223,15 @@ export default function Chatbot({ resume }: ChatbotProps) {
       {/* Chatbot Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-colors"
+        className={`text-white rounded-full p-4 lg:p-6 shadow-lg transition-all duration-300 transform ${
+          isHighlighted
+            ? 'bg-gradient-to-r from-blue-500 to-cyan-500 shadow-xl shadow-blue-400/30 scale-105'
+            : 'bg-blue-600 hover:bg-blue-700 hover:scale-105'
+        }`}
         aria-label="Toggle chatbot"
       >
         <svg
-          className={`w-6 h-6 transition-transform ${isOpen ? 'rotate-45' : ''}`}
+          className={`w-6 h-6 lg:w-8 lg:h-8 transition-transform ${isOpen ? 'rotate-45' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
