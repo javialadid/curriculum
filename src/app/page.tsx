@@ -7,6 +7,7 @@ import { ProfessionalSummary } from '../components/ProfessionalSummary'
 import { SkillsSection } from '../components/SkillsSection'
 import { SideProjects } from '../components/SideProjects'
 import { EducationSection } from '../components/EducationSection'
+import Chatbot from '../components/Chatbot'
 
 interface ExperienceItem {
   company: string
@@ -33,22 +34,6 @@ interface SideProjectItem {
   summary: string
 }
 
-interface Resume {
-  id: string
-  slug: string
-  name: string
-  summary: string
-  experience: ExperienceItem[]
-  education: EducationItem[]
-  skills: { [key: string]: string[] }
-  side_projects?: SideProjectItem | SideProjectItem[]
-  photo?: string
-  tag_line?: string
-  current_location?: string
-  created_at: string
-  updated_at: string
-}
-
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const { data: resume } = await supabase
@@ -63,7 +48,7 @@ export async function generateMetadata(): Promise<Metadata> {
         description: `Professional resume for ${resume.name}`
       }
     }
-  } catch (error) {
+  } catch {
     // Ignore errors and fall back to default
   }
 
@@ -73,8 +58,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const defaultSlug = process.env.NEXT_PUBLIC_DEFAULT_RESUME_SLUG
-
   const { data: resume, error } = await supabase
     .from('resumes')
     .select('*')
@@ -148,6 +131,9 @@ export default async function Home() {
           </div>
         </div>
       </div>
+
+      {/* Chatbot */}
+      <Chatbot resume={resume} />
     </div>
   )
 }

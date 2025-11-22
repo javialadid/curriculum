@@ -1,7 +1,6 @@
 'use client';
 
 import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Moon, Sun } from 'lucide-react'
 
@@ -10,13 +9,7 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ className }: ThemeToggleProps) {
-  const [mounted, setMounted] = useState(false)
   const { theme, setTheme, resolvedTheme } = useTheme()
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true)
-  }, [])
 
   // Use resolvedTheme for display, fallback to theme, then default to 'light'
   const currentTheme = resolvedTheme || theme || 'light'
