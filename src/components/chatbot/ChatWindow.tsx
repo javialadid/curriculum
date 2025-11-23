@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import type { Message, Resume, ChatbotData } from '@/types/chatbot'
 import { MessageList } from './MessageList'
@@ -30,6 +31,15 @@ export function ChatWindow({
   onKeyPress,
   chatbotData
 }: ChatWindowProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Focus input when chat opens
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [])
+
   return (
     <div className="fixed z-50 bottom-20 left-1/2 -translate-x-1/2 w-[80vw] max-w-96 h-96 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 flex flex-col md:absolute md:bottom-16 md:right-0 md:left-auto md:w-96 md:translate-x-0">
       {/* Header */}
@@ -63,6 +73,7 @@ export function ChatWindow({
         isLoading={isLoading}
         isDisabled={!chatbotData}
         isConversationEnded={isConversationEnded}
+        inputRef={inputRef}
       />
     </div>
   )

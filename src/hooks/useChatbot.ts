@@ -22,6 +22,10 @@ export function useChatbot({ resume }: UseChatbotProps) {
   const maxExchanges = parseInt(process.env.NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES || '20', 10)
   const firstName = resume?.name.split(' ')[0] || 'Assistant'
 
+  // Security: Rate limiting - minimum delay between messages (in milliseconds)
+  const MIN_MESSAGE_DELAY = 1000 // 1 second between messages
+  const [lastMessageTime, setLastMessageTime] = useState<number>(0)
+
   // Check if chatbot is active (always true now, as keys are private)
   const isActive = true
 
@@ -81,6 +85,14 @@ export function useChatbot({ resume }: UseChatbotProps) {
       return
     }
 
+    // Security: Rate limiting - prevent rapid-fire messages
+    const now = Date.now()
+    if (now - lastMessageTime < MIN_MESSAGE_DELAY) {
+      console.warn('⚠️ Chatbot: [CLIENT] Rate limit - message sent too quickly')
+      return
+    }
+    setLastMessageTime(now)
+
     let currentChatId = chatId
     if (!currentChatId) {
       currentChatId = crypto.randomUUID()
@@ -118,7 +130,7 @@ export function useChatbot({ resume }: UseChatbotProps) {
     })
 
     try {
-      const resumeContext = resume ? `\n\nFull Resume Data:\n${JSON.stringify({ ...resume, name: undefined, slug: undefined }, null, 2)}` : ''
+      const resumeContext = resume ? `\n\nFull Resume Data:\n${JSON.stringify({ ...resume, name: undefined, slug: undefined, photo: undefined }, null, 2)}` : ''
       const systemMessage = (!chatbotData.prompt || chatbotData.prompt.trim() === '')
         ? `You are a helpful AI assistant that answers questions about the user's professional background based on the following bio and resume data. Be conversational and provide specific, relevant information.\n\nBio: ${chatbotData.bio}${resumeContext}`
         : `${chatbotData.prompt}\n\nBio: ${chatbotData.bio}${resumeContext}`

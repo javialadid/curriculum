@@ -151,6 +151,9 @@ export async function fetchChatbotData(): Promise<ChatbotData | null> {
   }
 }
 
+// Security constants
+const MAX_MESSAGE_LENGTH = 1000
+
 export async function sendChatMessage(
   systemMessage: string,
   messages: Message[],
@@ -165,9 +168,58 @@ export async function sendChatMessage(
     return null
   }
 
+  // Security: Validate and sanitize inputs
+  if (!messages || messages.length === 0) {
+    console.error('❌ Chatbot: [SERVER] SECURITY - No messages provided')
+    return 'Sorry, I need a message to respond to.'
+  }
+
+
+  // Security: Validate and sanitize each message
+  const sanitizedMessages = messages.map(msg => {
+    if (!msg.content || typeof msg.content !== 'string') {
+      console.error('❌ Chatbot: [SERVER] SECURITY - Invalid message format')
+      return null
+    }
+
+    // Security: Check message length
+    if (msg.content.length > MAX_MESSAGE_LENGTH) {
+      console.error('❌ Chatbot: [SERVER] SECURITY - Message too long:', msg.content.length)
+      return null
+    }
+
+    // Security: Basic HTML/script tag removal
+    const sanitizedContent = msg.content
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/javascript:/gi, '') // Remove javascript: URLs
+      .replace(/on\w+=/gi, '') // Remove event handlers
+      .trim()
+
+    if (!sanitizedContent) {
+      console.error('❌ Chatbot: [SERVER] SECURITY - Message empty after sanitization')
+      return null
+    }
+
+    return {
+      role: msg.role,
+      content: sanitizedContent
+    }
+  }).filter(Boolean) as Message[]
+
+  if (sanitizedMessages.length !== messages.length) {
+    console.error('❌ Chatbot: [SERVER] SECURITY - Some messages failed validation')
+    return 'Sorry, there was an issue with your message. Please try again.'
+  }
+
+  // Security: Validate system message (allow larger size for resume context)
+  if (!systemMessage || typeof systemMessage !== 'string' || systemMessage.length > 50000) {
+    console.error('❌ Chatbot: [SERVER] SECURITY - Invalid system message')
+    return 'Sorry, there was a configuration error. Please try again later.'
+  }
+
   console.log('📤 Chatbot: [SERVER] Incoming chat message request', {
     systemMessageLength: systemMessage.length,
-    conversationLength: messages.length,
+    conversationLength: sanitizedMessages.length,
     model,
     chatId: chatId || 'unknown',
     timestamp: new Date().toISOString()
@@ -175,7 +227,7 @@ export async function sendChatMessage(
 
   const fullMessages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
     { role: 'system', content: systemMessage },
-    ...messages
+    ...sanitizedMessages
   ]
 
   const logMessages = fullMessages.map(({ role }) => ({ role }))
