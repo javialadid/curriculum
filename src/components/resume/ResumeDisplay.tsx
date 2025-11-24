@@ -29,7 +29,7 @@ export function ResumeDisplay({ resume }: ResumeDisplayProps) {
   return (
     <div className="min-h-screen bg-background text-foreground relative">
       {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 right-[max(0rem,calc((100vw-64rem)/2))] z-10">
         <ThemeToggle />
       </div>
 

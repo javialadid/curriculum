@@ -34,7 +34,7 @@ export default function Chatbot({ resume }: ChatbotProps) {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-4 right-[max(0rem,calc((100vw-64rem)/2))] z-50">
       <ChatbotToggleButton
         isOpen={isOpen}
         isHighlighted={isHighlighted}
