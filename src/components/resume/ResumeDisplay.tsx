@@ -62,7 +62,9 @@ export function ResumeDisplay({ resume }: ResumeDisplayProps) {
       </div>
 
       {/* Chatbot */}
-      <Chatbot resume={resume} />
+      <div className="no-print">
+        <Chatbot resume={resume} />
+      </div>
     </div>
   )
 }
