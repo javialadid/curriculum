@@ -1,6 +1,6 @@
 # Resume Portfolio with AI Chatbot
 
-A modern, responsive resume/portfolio website built with Next.js, featuring an AI-powered chatbot that answers questions about your professional background.
+A modern, responsive resume/portfolio website built with Next.js, featuring an AI-powered chatbot that answers questions about your professional background. The main idea of the chatbot is to make the resume interactive, and allowing more in depth details for a user to explore, instead of cluttering the user interface with details.
 
 ## Setup
 
@@ -23,6 +23,9 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 GROQ_API_KEY=your_groq_api_key
 NEXT_PUBLIC_GROQ_MODELNAME=llama-3.3-70b-versatile
 NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES=20
+
+# Optional: Google Analytics 4
+NEXT_PUBLIC_GA_ID=your_ga_measurement_id
 ```
 
 ### Supabase Setup
@@ -131,22 +134,6 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
 ## Project Structure
 
 ```
@@ -184,6 +171,7 @@ src/
 - **SEO Optimized**: Server-side rendering with Next.js
 - **Type Safe**: Full TypeScript implementation
 - **Modern UI**: Built with Tailwind CSS
+- **Analytics Integration**: Optional Google Analytics 4 for tracking user interactions like theme toggles and chatbot usage
 
 ## Deployment
 
@@ -196,6 +184,7 @@ src/
 2. **Environment Variables**
    - Set all required environment variables in Vercel's project settings
    - The chatbot will only work if `GROQ_API_KEY` is provided
+   - Set `NEXT_PUBLIC_GA_ID` for optional analytics tracking
 
 3. **Deploy**
    - Vercel will automatically deploy on every push to main branch

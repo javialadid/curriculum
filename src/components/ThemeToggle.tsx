@@ -2,7 +2,7 @@
 
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
-import { cn } from '@/lib/utils'
+import { cn, sendGAEvent } from '@/lib/utils'
 import { Moon, Sun } from 'lucide-react'
 
 interface ThemeToggleProps {
@@ -41,7 +41,11 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
 
   return (
     <button
-      onClick={() => setTheme(currentTheme === 'dark' ? 'light' : 'dark')}
+      onClick={() => {
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+        sendGAEvent('theme_toggle', { theme: newTheme });
+      }}
       className={cn(
         'no-print relative h-9 w-9 rounded-full p-0 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none',
         'bg-background shadow-lg border border-border',

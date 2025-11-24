@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { fetchChatbotData, sendChatMessage } from '@/lib/chatbot-actions'
 import type { Message, ChatbotData, Resume } from '@/types/chatbot'
+import { sendGAEvent } from '@/lib/utils'
 
 interface UseChatbotProps {
   resume?: Resume
@@ -55,6 +56,12 @@ export function useChatbot({ resume }: UseChatbotProps) {
     }, 15000) // Every 15 seconds
 
     return () => clearInterval(interval)
+  }, [isOpen])
+
+  useEffect(() => {
+    if (isOpen) {
+      sendGAEvent('chatbot_open');
+    }
   }, [isOpen])
 
   const loadChatbotData = async () => {
@@ -148,6 +155,7 @@ export function useChatbot({ resume }: UseChatbotProps) {
       })
 
       setMessages(prev => [...prev, assistantMessage])
+      sendGAEvent('chatbot_message_sent');
     } catch (error) {
       console.error('💥 Chatbot: [CLIENT] Server action failed (chatId: ' + currentChatId + '):', error)
       const errorMessage: Message = {
