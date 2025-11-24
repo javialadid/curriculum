@@ -1,4 +1,8 @@
+'use client'
+
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
 interface ResumeHeaderProps {
   name: string
@@ -8,8 +12,17 @@ interface ResumeHeaderProps {
 }
 
 export function ResumeHeader({ name, photo, tagLine, currentLocation }: ResumeHeaderProps) {
+  const pathname = usePathname()
+  const [currentUrl, setCurrentUrl] = useState('')
+
+  // Set the current URL after component mounts to avoid hydration mismatch
+  useEffect(() => {
+    setCurrentUrl(window.location.origin + pathname)
+  }, [pathname])
+
   return (
     <header className="text-center pb-6 sm:pb-8 mb-6 sm:mb-8 border-b-4 border-blue">
+
       {photo && (
         <div className="flex justify-center mb-6">
           <Image
@@ -28,6 +41,11 @@ export function ResumeHeader({ name, photo, tagLine, currentLocation }: ResumeHe
       {currentLocation && (
         <div className="text-sm sm:text-base text-muted-foreground">{currentLocation}</div>
       )}
+
+      {/* Print-only URL underneath location */}
+      <div className="hidden print:block text-center text-xs text-muted-foreground mt-2">
+        Visit {currentUrl} for more details.
+      </div>
     </header>
   )
 }
