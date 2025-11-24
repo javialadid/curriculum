@@ -23,6 +23,8 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 GROQ_API_KEY=your_groq_api_key
 NEXT_PUBLIC_GROQ_MODELNAME=llama-3.3-70b-versatile
 NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES=20
+CHATBOT_MAX_MESSAGE_LENGTH=1000
+CHATBOT_MAX_CONVERSATION_LENGTH=10000
 
 # Optional: Google Analytics 4
 NEXT_PUBLIC_GA_ID=your_ga_measurement_id
@@ -89,6 +91,8 @@ The chatbot is automatically enabled when you provide a `GROQ_API_KEY` in your e
 - **`GROQ_API_KEY`**: Your Groq API key for AI chat functionality
 - **`NEXT_PUBLIC_GROQ_MODELNAME`**: AI model to use (default: `llama-3.3-70b-versatile`)
 - **`NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES`**: Maximum number of AI responses per conversation (default: 20)
+- **`CHATBOT_MAX_MESSAGE_LENGTH`**: Maximum characters allowed per individual message (default: 1000)
+- **`CHATBOT_MAX_CONVERSATION_LENGTH`**: Maximum total characters for entire conversation before truncation (default: 10000)
 
 ### Chatbot Data Setup
 
@@ -107,7 +111,8 @@ The chatbot uses data from two sources:
 The chatbot includes several security measures:
 
 - **Rate Limiting**: 1-second delay between messages
-- **Message Length Limits**: 1000 characters maximum per message
+- **Message Length Limits**: Configurable maximum characters per message (default: 1000)
+- **Conversation Length Limits**: Automatic truncation of long conversations (default: 10000 total characters)
 - **Input Sanitization**: HTML/script tags are automatically removed
 - **Conversation Limits**: Maximum 20 exchanges per conversation (configurable)
 - **Privacy Protection**: Personal identifiers excluded from AI context
@@ -167,7 +172,7 @@ src/
 
 - **Responsive Design**: Works on desktop and mobile devices
 - **Dark Mode Support**: Automatic theme switching
-- **AI Chatbot**: Powered by Groq's fast inference API
+- **AI Chatbot**: Powered by Groq's fast inference API with configurable message limits and automatic conversation management
 - **SEO Optimized**: Server-side rendering with Next.js
 - **Type Safe**: Full TypeScript implementation
 - **Modern UI**: Built with Tailwind CSS

@@ -151,8 +151,9 @@ export async function fetchChatbotData(): Promise<ChatbotData | null> {
   }
 }
 
-// Security constants
-const MAX_MESSAGE_LENGTH = 1000
+// Security constants - configurable via env
+const MAX_MESSAGE_LENGTH = parseInt(process.env.CHATBOT_MAX_MESSAGE_LENGTH || '1000', 10)
+const MAX_CONVERSATION_LENGTH = parseInt(process.env.CHATBOT_MAX_CONVERSATION_LENGTH || '10000', 10)
 
 // Exported for testing
 export async function sanitizeMessage(content: string): Promise<string> {
@@ -197,38 +198,101 @@ export async function sendChatMessage(
     return 'Sorry, I need a message to respond to.'
   }
 
+  // Truncate conversation if it exceeds total length limit
+  let truncatedMessages = messages
+  const totalConversationLength = systemMessage.length + messages.reduce((total, msg) => total + (msg.content?.length || 0), 0)
+
+  if (totalConversationLength > MAX_CONVERSATION_LENGTH) {
+    console.log('📝 Chatbot: [SERVER] Conversation length', totalConversationLength, 'exceeds limit', MAX_CONVERSATION_LENGTH, '- truncating older messages')
+
+    // Calculate how much we need to remove
+    let currentLength = systemMessage.length
+    let messagesToKeep: Message[] = []
+
+    // Start from the end (most recent messages) and work backwards
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i]
+      const msgLength = msg.content?.length || 0
+
+      if (currentLength + msgLength <= MAX_CONVERSATION_LENGTH) {
+        messagesToKeep.unshift(msg) // Add to beginning to maintain order
+        currentLength += msgLength
+      } else {
+        break // Stop when we can't add more messages
+      }
+    }
+
+    // Ensure we keep at least the most recent user message
+    if (messagesToKeep.length === 0 || messagesToKeep[messagesToKeep.length - 1].role !== 'user') {
+      // If no user message in kept messages, keep at least the last user message
+      const lastUserMessage = messages.slice().reverse().find(msg => msg.role === 'user')
+      if (lastUserMessage && !messagesToKeep.includes(lastUserMessage)) {
+        messagesToKeep.push(lastUserMessage)
+      }
+    }
+
+    truncatedMessages = messagesToKeep
+    console.log('📝 Chatbot: [SERVER] Truncated conversation from', messages.length, 'to', truncatedMessages.length, 'messages, new total length:', systemMessage.length + truncatedMessages.reduce((total, msg) => total + (msg.content?.length || 0), 0))
+  }
 
   // Security: Validate and sanitize each message
-  const sanitizedMessagesPromises = messages.map( async msg => {
+  const validationResults = await Promise.all(truncatedMessages.map(async (msg, index) => {
+    const validationErrors: string[] = []
+
     if (!msg.content || typeof msg.content !== 'string') {
-      console.error('❌ Chatbot: [SERVER] SECURITY - Invalid message format')
-      return null
+      validationErrors.push('Invalid message format (missing or non-string content)')
     }
 
     // Security: Check message length
-    if (msg.content.length > MAX_MESSAGE_LENGTH) {
-      console.error('❌ Chatbot: [SERVER] SECURITY - Message too long:', msg.content.length)
-      return null
+    if (msg.content && msg.content.length > MAX_MESSAGE_LENGTH) {
+      validationErrors.push(`Message too long (${msg.content.length} > ${MAX_MESSAGE_LENGTH} characters)`)
     }
 
     // Security: Basic HTML/script tag removal
-    const sanitizedContent = await sanitizeMessage(msg.content)
+    const sanitizedContent = await sanitizeMessage(msg.content || '')
 
-    if (!sanitizedContent) {
-      console.error('❌ Chatbot: [SERVER] SECURITY - Message empty after sanitization')
-      return null
+    if (!sanitizedContent && msg.content) {
+      validationErrors.push('Message empty after sanitization (likely contained only malicious content)')
     }
 
     return {
-      role: msg.role,
-      content: sanitizedContent
+      index,
+      originalMessage: {
+        role: msg.role,
+        contentLength: msg.content?.length || 0,
+        contentPreview: msg.content ? msg.content.substring(0, 50) + (msg.content.length > 50 ? '...' : '') : ''
+      },
+      validationErrors,
+      sanitizedMessage: validationErrors.length === 0 ? {
+        role: msg.role,
+        content: sanitizedContent
+      } : null
     }
-  })
+  }))
 
-  const sanitizedMessages = (await Promise.all(sanitizedMessagesPromises)).filter(Boolean) as Message[]
+  const failedValidations = validationResults.filter(result => result.validationErrors.length > 0)
+  const sanitizedMessages = validationResults
+    .filter(result => result.sanitizedMessage !== null)
+    .map(result => result.sanitizedMessage!) as Message[]
 
-  if (sanitizedMessages.length !== messages.length) {
-    console.error('❌ Chatbot: [SERVER] SECURITY - Some messages failed validation')
+  if (failedValidations.length > 0) {
+    console.error('❌ Chatbot: [SERVER] SECURITY - Message validation failed for', failedValidations.length, 'out of', truncatedMessages.length, 'messages')
+    failedValidations.forEach(failure => {
+      console.error('❌ Chatbot: [SERVER] SECURITY - Message', failure.index, 'failed validation:', {
+        role: failure.originalMessage.role,
+        contentLength: failure.originalMessage.contentLength,
+        contentPreview: failure.originalMessage.contentPreview,
+        errors: failure.validationErrors,
+        timestamp: new Date().toISOString()
+      })
+    })
+    console.error('❌ Chatbot: [SERVER] SECURITY - Validation summary:', {
+      totalMessages: messages.length,
+      validMessages: sanitizedMessages.length,
+      failedMessages: failedValidations.length,
+      failureReasons: failedValidations.flatMap(f => f.validationErrors),
+      timestamp: new Date().toISOString()
+    })
     return 'Sorry, there was an issue with your message. Please try again.'
   }
 
@@ -241,6 +305,9 @@ export async function sendChatMessage(
   console.log('📤 Chatbot: [SERVER] Incoming chat message request', {
     systemMessageLength: systemMessage.length,
     conversationLength: sanitizedMessages.length,
+    totalConversationChars: systemMessage.length + sanitizedMessages.reduce((total, msg) => total + msg.content.length, 0),
+    maxMessageLength: MAX_MESSAGE_LENGTH,
+    maxConversationLength: MAX_CONVERSATION_LENGTH,
     model,
     chatId: chatId || 'unknown',
     timestamp: new Date().toISOString()
