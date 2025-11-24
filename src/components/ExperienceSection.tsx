@@ -49,7 +49,7 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
                 </div>
               </div>
               <ul className="list-none pl-0 mt-3">
-                {exp.highlights && exp.highlights.length > 0 ? (
+                {exp.highlights && exp.highlights.length > 0 && (
                   exp.highlights.map((highlight, hIdx) => (
                     <li key={hIdx} className="relative pl-5 mb-2 text-base leading-relaxed font-light">
                       <span className="absolute left-0 text-blue font-bold">—</span>
@@ -60,7 +60,8 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
                       </span>
                     </li>
                   ))
-                ) : (
+                )}
+                {exp.description && (
                   <li className="relative pl-5 mb-2 text-base leading-relaxed font-light">
                     <span className="absolute left-0 text-blue-600 font-bold">—</span>
                     <span className="prose prose-sm max-w-none">

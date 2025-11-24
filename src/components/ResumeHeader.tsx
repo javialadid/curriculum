@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 interface ResumeHeaderProps {
   name: string
   photo?: string
@@ -10,9 +12,11 @@ export function ResumeHeader({ name, photo, tagLine, currentLocation }: ResumeHe
     <header className="text-center pb-6 sm:pb-8 mb-6 sm:mb-8 border-b-4 border-blue">
       {photo && (
         <div className="flex justify-center mb-6">
-          <img
+          <Image
             src={photo}
             alt={`${name} profile picture`}
+            width={128}
+            height={128}
             className="w-32 h-32 rounded-full object-cover border-4 border-border shadow-lg"
           />
         </div>
