@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from 'next-themes'
 import Script from 'next/script';
+import { Analytics } from '@vercel/analytics/react'
+import { CookieConsent } from '@/components/CookieConsent';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,11 +30,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const gaEnabled = !!process.env.NEXT_PUBLIC_GA_ID
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {process.env.NEXT_PUBLIC_GA_ID && (
+          {gaEnabled && (
             <>
               <Script
                 src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
@@ -43,12 +47,17 @@ export default function RootLayout({
                   window.dataLayer = window.dataLayer || [];
                   function gtag(){dataLayer.push(arguments);}
                   gtag('js', new Date());
+                  gtag('consent', 'default', {
+                    analytics_storage: 'denied'
+                  });
                   gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
                 `}
               </Script>
             </>
           )}
           {children}
+          <Analytics />
+          <CookieConsent gaEnabled={gaEnabled} />
         </ThemeProvider>
       </body>
     </html>

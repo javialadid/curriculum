@@ -61,6 +61,22 @@ export function ResumeDisplay({ resume }: ResumeDisplayProps) {
         </div>
       </div>
 
+      {/* Data Processing Notice */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-8 pb-4">
+        <div className="text-xs text-muted-foreground text-center border-t border-border pt-4">
+          <p>
+            This portfolio uses AI to answer questions about professional background.
+            {' '}
+            <a
+              href="/privacy"
+              className="underline hover:text-foreground transition-colors"
+            >
+              Privacy Policy
+            </a>
+          </p>
+        </div>
+      </div>
+
       {/* Chatbot */}
       <div className="no-print">
         <Chatbot resume={resume} />
