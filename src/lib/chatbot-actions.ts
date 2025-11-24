@@ -154,6 +154,29 @@ export async function fetchChatbotData(): Promise<ChatbotData | null> {
 // Security constants
 const MAX_MESSAGE_LENGTH = 1000
 
+// Exported for testing
+export async function sanitizeMessage(content: string): Promise<string> {
+  if (!content || typeof content !== 'string') {
+    return ''
+  }
+
+  // Security: Aggressive sanitization for malicious content
+  let sanitizedContent = content
+
+  // Remove HTML tags completely (including content between tags for script/style)
+  sanitizedContent = sanitizedContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+  sanitizedContent = sanitizedContent.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+  sanitizedContent = sanitizedContent.replace(/<[^>]*>/g, '') // Remove remaining HTML tags
+
+  // Remove javascript: URLs completely
+  sanitizedContent = sanitizedContent.replace(/javascript:[^)]*\)/gi, '')
+
+  // Remove event handlers completely
+  sanitizedContent = sanitizedContent.replace(/on\w+=[^)]*\)/gi, '')
+
+  return sanitizedContent.trim()
+}
+
 export async function sendChatMessage(
   systemMessage: string,
   messages: Message[],
@@ -176,7 +199,7 @@ export async function sendChatMessage(
 
 
   // Security: Validate and sanitize each message
-  const sanitizedMessages = messages.map(msg => {
+  const sanitizedMessagesPromises = messages.map( async msg => {
     if (!msg.content || typeof msg.content !== 'string') {
       console.error('❌ Chatbot: [SERVER] SECURITY - Invalid message format')
       return null
@@ -189,11 +212,7 @@ export async function sendChatMessage(
     }
 
     // Security: Basic HTML/script tag removal
-    const sanitizedContent = msg.content
-      .replace(/<[^>]*>/g, '') // Remove HTML tags
-      .replace(/javascript:/gi, '') // Remove javascript: URLs
-      .replace(/on\w+=/gi, '') // Remove event handlers
-      .trim()
+    const sanitizedContent = await sanitizeMessage(msg.content)
 
     if (!sanitizedContent) {
       console.error('❌ Chatbot: [SERVER] SECURITY - Message empty after sanitization')
@@ -204,7 +223,9 @@ export async function sendChatMessage(
       role: msg.role,
       content: sanitizedContent
     }
-  }).filter(Boolean) as Message[]
+  })
+
+  const sanitizedMessages = (await Promise.all(sanitizedMessagesPromises)).filter(Boolean) as Message[]
 
   if (sanitizedMessages.length !== messages.length) {
     console.error('❌ Chatbot: [SERVER] SECURITY - Some messages failed validation')
