@@ -39,6 +39,7 @@ export default function Chatbot({ resume }: ChatbotProps) {
         isOpen={isOpen}
         isHighlighted={isHighlighted}
         onClick={() => setIsOpen(!isOpen)}
+        photo={resume?.photo}
       />
 
       {isOpen && (

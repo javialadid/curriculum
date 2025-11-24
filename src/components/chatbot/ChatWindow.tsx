@@ -55,7 +55,7 @@ export function ChatWindow({
         )}
         <div>
           <h3 className="font-semibold">AI {firstName}</h3>
-          <p className="text-sm opacity-90">Ask me anything!</p>
+          <p className="text-sm opacity-90">Explore my bio</p>
         </div>
       </div>
 
