@@ -1,14 +1,135 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Resume Portfolio with AI Chatbot
 
-## Environment Variables
+A modern, responsive resume/portfolio website built with Next.js, featuring an AI-powered chatbot that answers questions about your professional background.
+
+## Setup
+
+### Prerequisites
+
+- Node.js 18+
+- A [Supabase](https://supabase.com) account
+- A [Groq](https://groq.com) API key (for chatbot functionality)
+
+### Environment Variables
 
 Create a `.env.local` file in the root directory with the following variables:
 
 ```env
 # Required: Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Optional: Chatbot Configuration
+GROQ_API_KEY=your_groq_api_key
+NEXT_PUBLIC_GROQ_MODELNAME=llama-3.3-70b-versatile
+NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES=20
 ```
+
+### Supabase Setup
+
+1. **Create a Supabase Project**
+   - Go to [supabase.com](https://supabase.com) and create a new project
+   - Wait for the project to be fully initialized
+
+2. **Database Setup**
+   - Navigate to the SQL Editor in your Supabase dashboard
+   - Run the following SQL to create the required tables:
+
+```sql
+-- Create chatbot table for AI configuration
+CREATE TABLE chatbot (
+  id SERIAL PRIMARY KEY,
+  bio TEXT NOT NULL,
+  prompt TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create resumes table for portfolio data
+CREATE TABLE resumes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  experience JSONB NOT NULL DEFAULT '[]'::jsonb,
+  education JSONB NOT NULL DEFAULT '[]'::jsonb,
+  skills JSONB NOT NULL DEFAULT '{}'::jsonb,
+  side_projects JSONB,
+  photo TEXT,
+  tag_line TEXT,
+  current_location TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Row Level Security (optional but recommended)
+ALTER TABLE chatbot ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resumes ENABLE ROW LEVEL SECURITY;
+
+-- Create policies to allow anonymous read access (for public portfolio)
+CREATE POLICY "Allow anonymous read access on chatbot" ON chatbot FOR SELECT USING (true);
+CREATE POLICY "Allow anonymous read access on resumes" ON resumes FOR SELECT USING (true);
+```
+
+3. **Insert Sample Data**
+   - Add your chatbot configuration to the `chatbot` table
+   - Add your resume data to the `resumes` table
+
+## Chatbot Configuration
+
+### Enabling the Chatbot
+
+The chatbot is automatically enabled when you provide a `GROQ_API_KEY` in your environment variables. Without this key, the chatbot button won't appear.
+
+### Chatbot Settings
+
+- **`GROQ_API_KEY`**: Your Groq API key for AI chat functionality
+- **`NEXT_PUBLIC_GROQ_MODELNAME`**: AI model to use (default: `llama-3.3-70b-versatile`)
+- **`NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES`**: Maximum number of AI responses per conversation (default: 20)
+
+### Chatbot Data Setup
+
+The chatbot uses data from two sources:
+
+1. **Bio & Prompt** (from `chatbot` table):
+   - `bio`: General information about yourself
+   - `prompt`: Custom instructions for the AI assistant
+
+2. **Resume Context** (from `resumes` table):
+   - Automatically includes your professional experience, education, skills, and projects
+   - Sensitive data (name, photo URL) is excluded for privacy
+
+### Security Features
+
+The chatbot includes several security measures:
+
+- **Rate Limiting**: 1-second delay between messages
+- **Message Length Limits**: 1000 characters maximum per message
+- **Input Sanitization**: HTML/script tags are automatically removed
+- **Conversation Limits**: Maximum 20 exchanges per conversation (configurable)
+- **Privacy Protection**: Personal identifiers excluded from AI context
+
+## Getting Started
+
+First, install dependencies:
+
+```bash
+npm install
+```
+
+Then, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Getting Started
 
@@ -26,21 +147,77 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── [slug]/            # Dynamic resume pages
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+├── components/            # React components
+│   ├── chatbot/          # Chatbot components
+│   ├── resume/           # Resume display components
+│   └── ui/               # Reusable UI components
+├── hooks/                # Custom React hooks
+├── lib/                  # Utility functions and configurations
+│   ├── chatbot-actions.ts # Server actions for chatbot
+│   └── supabase.ts       # Supabase client configuration
+└── types/                # TypeScript type definitions
+```
 
-## Learn More
+## Development
 
-To learn more about Next.js, take a look at the following resources:
+### Available Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Key Features
 
-## Deploy on Vercel
+- **Responsive Design**: Works on desktop and mobile devices
+- **Dark Mode Support**: Automatic theme switching
+- **AI Chatbot**: Powered by Groq's fast inference API
+- **SEO Optimized**: Server-side rendering with Next.js
+- **Type Safe**: Full TypeScript implementation
+- **Modern UI**: Built with Tailwind CSS
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Vercel (Recommended)
+
+1. **Connect Repository**
+   - Import your GitHub repository to Vercel
+   - Add environment variables in Vercel dashboard
+
+2. **Environment Variables**
+   - Set all required environment variables in Vercel's project settings
+   - The chatbot will only work if `GROQ_API_KEY` is provided
+
+3. **Deploy**
+   - Vercel will automatically deploy on every push to main branch
+   - Your resume will be live at `your-project.vercel.app`
+
+### Other Platforms
+
+This is a standard Next.js application that can be deployed to any platform supporting Node.js:
+
+- **Netlify**: Use `npm run build` and deploy the `.next` folder
+- **Railway**: Connect your GitHub repo and set environment variables
+- **DigitalOcean App Platform**: Use the Node.js buildpack
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make your changes and test thoroughly
+4. Commit your changes: `git commit -m 'Add your feature'`
+5. Push to the branch: `git push origin feature/your-feature`
+6. Open a Pull Request
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE).
