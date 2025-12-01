@@ -80,6 +80,27 @@ CREATE POLICY "Allow anonymous read access on resumes" ON resumes FOR SELECT USI
    - Add your chatbot configuration to the `chatbot` table
    - Add your resume data to the `resumes` table
 
+4. **Prevent Supabase from Pausing (Free Tier)**
+   - Supabase free tier databases pause after 7 days of inactivity
+   - To prevent this, set up a cron job that pings your database daily
+   - **For Vercel deployments**: Create a `vercel.json` file in your project root with:
+
+     ```json
+     {
+       "crons": [
+         {
+           "path": "/api/health",
+           "schedule": "0 12 * * *"
+         }
+       ]
+     }
+     ```
+
+   - **For other deployment platforms**, create a similar cron job:
+     - **Railway**: Use their cron job feature to call your `/api/health` endpoint daily
+     - **Netlify**: Use a third-party cron service like cron-job.org to ping your health endpoint
+     - **Other platforms**: Set up a scheduled task to call `https://yourdomain.com/api/health` daily
+
 ## Chatbot Configuration
 
 ### Enabling the Chatbot
