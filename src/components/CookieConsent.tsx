@@ -67,45 +67,37 @@ export function CookieConsent({ gaEnabled = false }: CookieConsentProps) {
   if (!showBanner || hasConsented) return null
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border p-4 shadow-lg">
-      <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-        <div className="flex items-start gap-3 flex-1">
-          <Cookie className="w-5 h-5 mt-0.5 text-muted-foreground flex-shrink-0" />
-          <div className="text-sm">
-            <p className="font-medium mb-1">
-              Enable Google Analytics?
-            </p>
-            <p className="text-muted-foreground">
-              {isReturnVisitor
-                ? 'Opt into Google Analytics for detailed insights about user behavior and interactions.'
-                : 'Enable Google Analytics to track detailed visitor interactions and behavior patterns.'
-              }
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {isReturnVisitor && (
-            <button
-              onClick={dismissBanner}
-              className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-              title="Dismiss for now"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+    <div className="fixed bottom-0 left-2 sm:left-1/2 sm:-translate-x-1/2 z-50 bg-background border border-border rounded-lg p-2 shadow-lg">
+      <div className="flex items-center gap-3">
+        <Cookie className="w-4 h-4 text-muted-foreground" />
+
+        <p className="text-xs font-medium whitespace-nowrap">
+          Enable Analytics?
+        </p>
+
+        {isReturnVisitor && (
           <button
-            onClick={declineCookies}
-            className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            onClick={dismissBanner}
+            className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+            title="Dismiss for now"
           >
-            Decline
+            <X className="w-3 h-3" />
           </button>
-          <button
-            onClick={acceptCookies}
-            className="px-3 py-1.5 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 transition-colors"
-          >
-            Enable
-          </button>
-        </div>
+        )}
+
+        <button
+          onClick={declineCookies}
+          className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Decline
+        </button>
+
+        <button
+          onClick={acceptCookies}
+          className="px-2 py-1 bg-primary text-primary-foreground text-xs rounded hover:bg-primary/90 transition-colors"
+        >
+          Enable
+        </button>
       </div>
     </div>
   )
