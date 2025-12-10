@@ -4,9 +4,9 @@ import { supabase } from '@/lib/supabase'
 export async function GET() {
   try {
     // Simple query to check database connection and keep it alive
-    // Try to select from a system table that exists in all Supabase instances
+    // Try to select from the resumes table to verify our application tables are accessible
     const { error } = await supabase
-      .from('pg_tables')
+      .from('resumes')
       .select('count')
       .limit(1)
       .single()
