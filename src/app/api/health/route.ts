@@ -2,39 +2,58 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
 export async function GET() {
+  const startTime = Date.now()
+  console.log('🏥 Health check initiated at', new Date().toISOString())
+
   try {
-    // Simple query to check database connection and keep it alive
-    // Try to select from the resumes table to verify our application tables are accessible
-    const { error } = await supabase
+    // Query actual resume data to verify database connection and show sample data
+    console.log('🔍 Checking database connection and retrieving sample resume data...')
+    const { data: resume, error } = await supabase
       .from('resumes')
-      .select('count')
+      .select('name, slug, summary')
       .limit(1)
       .single()
 
     if (error) {
-      // If that fails, try a different approach - just check if we can connect
-      // by attempting to get auth user (this tests the connection without requiring specific tables)
+      console.warn('⚠️  Database query error:', error.message)
       const { error: authError } = await supabase.auth.getUser()
 
-      // We don't care about the auth result, just whether the connection works
-      // Auth errors are expected if not logged in, but connection errors are what we want to catch
       if ((authError && authError.message.includes('connection')) || (authError && authError.message.includes('network'))) {
+        console.error('🚫 Auth connection error:', authError.message)
         throw authError
       }
+    } else {
+      console.log('✅ Database connection successful')
+      if (resume) {
+        console.log('📋 Sample resume data retrieved:', {
+          name: resume.name,
+          slug: resume.slug,
+          summaryPreview: resume.summary ? resume.summary.substring(0, 100) + (resume.summary.length > 100 ? '...' : '') : 'No summary available',
+          summaryLength: resume.summary?.length || 0
+        })
+      } else {
+        console.warn('⚠️  Database query succeeded but returned no data')
+      }
     }
+
+    const responseTime = Date.now() - startTime
+    console.log(`🎉 Health check completed successfully in ${responseTime}ms`)
 
     return NextResponse.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      database: 'connected'
+      database: 'connected',
+      responseTime: `${responseTime}ms`
     })
   } catch (error) {
-    console.error('Health check failed:', error)
+    const responseTime = Date.now() - startTime
+    console.error('💥 Health check failed after', responseTime + 'ms:', error)
     return NextResponse.json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
       database: 'disconnected',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      responseTime: `${responseTime}ms`
     }, { status: 503 })
   }
 }
