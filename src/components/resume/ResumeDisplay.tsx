@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { ThemeToggle } from '../ThemeToggle'
 import { ExperienceSection } from '../ExperienceSection'
 import { ResumeHeader } from '../ResumeHeader'
@@ -33,7 +34,7 @@ export function ResumeDisplay({ resume }: ResumeDisplayProps) {
         <ThemeToggle />
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-12">
+      <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-12 print-container">
         <ResumeHeader
           name={resume.name}
           photo={resume.photo}
@@ -42,16 +43,16 @@ export function ResumeDisplay({ resume }: ResumeDisplayProps) {
         />
 
         {/* Main Content - Two Column Layout */}
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 print:flex-row print:gap-4">
           {/* Left Column - Experience */}
-          <div className="w-full lg:flex-2">
+          <div className="w-full lg:flex-2 print:w-[62%] print:flex-none">
             <ProfessionalSummary summary={resume.summary} />
 
             <ExperienceSection mainExperience={mainExperience} />
           </div>
 
           {/* Right Column - Skills, Education, Projects */}
-          <div className="w-full lg:flex-1 lg:mt-0 mt-8">
+          <div className="w-full lg:flex-1 lg:mt-0 mt-8 bg-muted/30 lg:p-4 lg:rounded-lg print:w-[35%] print:flex-none print:mt-0 print:p-3 print:rounded print-right-panel">
             <SkillsSection skills={skills} />
 
             <SideProjects projects={sideProjects} />
@@ -62,17 +63,17 @@ export function ResumeDisplay({ resume }: ResumeDisplayProps) {
       </div>
 
       {/* Data Processing Notice */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-8 pb-4">
+      <div className="print:hidden max-w-5xl mx-auto px-4 sm:px-8 pb-4">
         <div className="text-xs text-muted-foreground text-center border-t border-border pt-4">
           <p>
             This portfolio uses AI to answer questions about professional background.
             {' '}
-            <a
+            <Link
               href="/privacy"
               className="underline hover:text-foreground transition-colors"
             >
               Privacy Policy
-            </a>
+            </Link>
           </p>
         </div>
       </div>

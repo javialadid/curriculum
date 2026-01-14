@@ -18,11 +18,11 @@ const preprocessText = (text: string) => {
 
 export function ProfessionalSummary({ summary }: ProfessionalSummaryProps) {
   return (
-    <section className="mb-12">
-      <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-border flex items-center">
-        <span className="mr-3 text-lg">🚀</span> Professional Summary
+    <section className="mb-12 print:mb-4 print-keep-together">
+      <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-border print:text-black flex items-center print:mb-2 print:text-sm">
+        <span className="mr-3 text-lg print:hidden">🚀</span> Summary
       </h2>
-      <div className="text-base leading-relaxed font-light prose prose-sm max-w-none">
+      <div className="text-base leading-relaxed font-light prose prose-sm max-w-none print:text-xs">
         <ReactMarkdown components={markdownComponents}>{preprocessText(summary)}</ReactMarkdown>
       </div>
     </section>

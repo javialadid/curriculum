@@ -26,18 +26,18 @@ export function SideProjects({ projects }: SideProjectsProps) {
   if (projects.length === 0) return null
 
   return (
-    <section className="mb-8">
-      <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-border flex items-center">
-        <span className="mr-3 text-lg">🔗</span> Side Projects
+    <section className="mb-8 print:mb-4 print-keep-together">
+      <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-border print:text-black flex items-center print:mb-2 print:text-sm">
+        <span className="mr-3 text-lg print:hidden">🔗</span> Side Projects
       </h2>
       {projects.map((project: SideProjectItem, idx: number) => (
-        <div key={idx} className="mb-4">
-          <div className="text-base font-medium text-foreground mb-2">{project.title}</div>
-          <div className="mb-2 prose prose-sm max-w-none font-light">
+        <div key={idx} className="mb-4 print:mb-2">
+          <div className="text-base font-medium text-foreground mb-2 print:text-xs print:mb-1">{project.title}</div>
+          <div className="mb-2 prose prose-sm max-w-none font-light print:text-xs print:mb-1">
             <ReactMarkdown components={markdownComponents}>{preprocessText(project.summary)}</ReactMarkdown>
           </div>
           {project.links && Object.keys(project.links).length > 0 && (
-            <div className="flex gap-4 mt-2">
+            <div className="flex flex-wrap gap-4 mt-2 print:mt-1 print:gap-1">
               {Object.entries(project.links).map(([label, url], lIdx) => (
                 <span key={lIdx} className="block">
                   <span className="print:hidden">
@@ -50,8 +50,8 @@ export function SideProjects({ projects }: SideProjectsProps) {
                       {label}
                     </a>
                   </span>
-                  <span className="hidden print:inline text-sm text-muted-foreground">
-                    {label}: {url as string}
+                  <span className="hidden print:inline text-xs text-blue break-all">
+                    {url as string}
                   </span>
                 </span>
               ))}

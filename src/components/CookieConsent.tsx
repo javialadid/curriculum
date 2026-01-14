@@ -8,28 +8,36 @@ interface CookieConsentProps {
 }
 
 export function CookieConsent({ gaEnabled = false }: CookieConsentProps) {
-  const [showBanner, setShowBanner] = useState(false)
-  const [hasConsented, setHasConsented] = useState(false)
-  const [isReturnVisitor, setIsReturnVisitor] = useState(false)
+  // Initialize state based on localStorage values to avoid useEffect setState calls
+  const [showBanner, setShowBanner] = useState(() => {
+    if (!gaEnabled) return false
+    const sessionDismissed = typeof window !== 'undefined' ? sessionStorage.getItem('cookie-banner-dismissed') : null
+    if (sessionDismissed) return false
 
-  useEffect(() => {
-    // Only show banner if GA is enabled
+    const consent = typeof window !== 'undefined' ? localStorage.getItem('cookie-consent') : null
+    return !consent || consent === 'declined'
+  })
+
+  const [hasConsented, setHasConsented] = useState(() => {
+    if (typeof window === 'undefined') return false
     const consent = localStorage.getItem('cookie-consent')
-    const sessionDismissed = sessionStorage.getItem('cookie-banner-dismissed')
+    return consent === 'accepted'
+  })
 
-    if (gaEnabled && !sessionDismissed) {
-      if (!consent) {
-        // First time visitor - show banner
-        setShowBanner(true)
-      } else if (consent === 'declined') {
-        // Return visitor who previously declined - show banner again
-        setShowBanner(true)
-        setIsReturnVisitor(true)
-      } else if (consent === 'accepted') {
-        setHasConsented(true)
-      }
+  const [isReturnVisitor] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const consent = localStorage.getItem('cookie-consent')
+    return consent === 'declined'
+  })
+
+  // Only use effect for GA initialization when consent changes
+  useEffect(() => {
+    if (hasConsented && typeof window !== 'undefined' && window.gtag) {
+      window.gtag('consent', 'update', {
+        analytics_storage: 'granted'
+      })
     }
-  }, [gaEnabled])
+  }, [hasConsented])
 
   const acceptCookies = () => {
     localStorage.setItem('cookie-consent', 'accepted')
@@ -38,8 +46,8 @@ export function CookieConsent({ gaEnabled = false }: CookieConsentProps) {
     setHasConsented(true)
 
     // Enable GA tracking
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('consent', 'update', {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('consent', 'update', {
         analytics_storage: 'granted'
       })
     }
@@ -51,8 +59,8 @@ export function CookieConsent({ gaEnabled = false }: CookieConsentProps) {
     setShowBanner(false)
 
     // Disable GA tracking
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('consent', 'update', {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('consent', 'update', {
         analytics_storage: 'denied'
       })
     }

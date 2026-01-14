@@ -33,26 +33,26 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
     <>
       {/* Professional Experience */}
       <section>
-        <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-border flex items-center">
-          <span className="mr-3 text-lg">💼</span> Professional Experience
+        <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-border print:text-black flex items-center print:mb-2 print:text-sm">
+          <span className="mr-3 text-lg print:hidden">💼</span> Experience
         </h2>
-        <div className="space-y-8">
+        <div className="space-y-8 print:space-y-4">
           {mainExperience.map((exp, idx) => (
-            <div key={idx} className="mb-8">
-              <div className="flex justify-between items-start mb-2 flex-wrap">
+            <div key={idx} className="mb-8 print-compact-exp print-keep-together">
+              <div className="flex justify-between items-start mb-2 flex-wrap print:mb-1">
                 <div>
-                  <div className="text-lg font-bold text-blue">{exp.title}</div>
-                  <div className="text-lg font-medium text-foreground">{exp.company}</div>
+                  <div className="text-lg font-bold text-blue print:text-xs print:font-semibold">{exp.title}</div>
+                  <div className="text-lg font-medium text-foreground print:text-xs">{exp.company}</div>
                 </div>
-                <div className="text-sm italic text-muted-foreground whitespace-nowrap">
+                <div className="text-sm italic text-muted-foreground whitespace-nowrap print:text-xs print:not-italic">
                   {exp.location} | {exp.startDate} – {exp.endDate}
                 </div>
               </div>
-              <ul className="list-none pl-0 mt-3">
+              <ul className="list-none pl-0 mt-3 print:mt-1 print:list-disc print:pl-3 print:marker:text-blue">
                 {exp.highlights && exp.highlights.length > 0 && (
                   exp.highlights.map((highlight, hIdx) => (
-                    <li key={hIdx} className="relative pl-5 mb-2 text-base leading-relaxed font-light">
-                      <span className="absolute left-0 text-blue font-bold">—</span>
+                    <li key={hIdx} className="relative pl-5 mb-2 text-base leading-relaxed font-light print:pl-0 print:text-xs print:mb-1">
+                      <span className="absolute left-0 text-blue font-bold print:hidden">—</span>
                       <span className="prose prose-sm max-w-none">
                         <ReactMarkdown components={{
                           p: ({ children, ...props }: ComponentProps<'span'>) => <span {...props}>{children}</span>
@@ -62,8 +62,8 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
                   ))
                 )}
                 {exp.description && (
-                  <li className="relative pl-5 mb-2 text-base leading-relaxed font-light">
-                    <span className="absolute left-0 text-blue-600 font-bold">—</span>
+                  <li className="relative pl-5 mb-2 text-base leading-relaxed font-light print:pl-0 print:text-xs print:mb-1">
+                    <span className="absolute left-0 text-blue-600 font-bold print:hidden">—</span>
                     <span className="prose prose-sm max-w-none">
                       <ReactMarkdown components={{
                         p: ({ children, ...props }: ComponentProps<'span'>) => <span {...props}>{children}</span>
@@ -79,7 +79,7 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
                     className="text-sm text-blue hover:text-blue/80 flex items-center gap-1 cursor-pointer"
                     title="View technologies used"
                   >
-                    <span>🛠️</span>
+                    <span className="print:hidden">🛠️</span>
                     <span className="underline underline-offset-2">Technologies</span>
                     <span className="ml-1 text-xs">
                       {expandedTech === idx ? '▲' : '▼'}
