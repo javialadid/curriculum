@@ -141,7 +141,7 @@ export function useChatbot({ resume }: UseChatbotProps) {
       const systemMessage = (!chatbotData.prompt || chatbotData.prompt.trim() === '')
         ? `You are a helpful AI assistant that answers questions about the user's professional background based on the following bio and resume data. Be conversational and provide specific, relevant information.\n\nBio: ${chatbotData.bio}${resumeContext}`
         : `${chatbotData.prompt}\n\nBio: ${chatbotData.bio}${resumeContext}`
-      const responseContent = await sendChatMessage(systemMessage, conversationMessages, groqModel, currentChatId)
+      const responseContent = await sendChatMessage(systemMessage, conversationMessages, groqModel)
 
       const assistantMessage: Message = {
         role: 'assistant',

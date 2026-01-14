@@ -54,22 +54,22 @@ export function PrivacyContent() {
 
       <h3>AI Service Provider (Groq)</h3>
       <ul>
-        <li>User messages are sent to Groq's API for processing</li>
-        <li>Groq's privacy policy: <a href="https://groq.com/privacy-policy/" target="_blank" rel="noopener noreferrer">https://groq.com/privacy-policy/</a></li>
+        <li>User messages are sent to Groq&apos;s API for processing</li>
+        <li>Groq&apos;s privacy policy: <a href="https://groq.com/privacy-policy/" target="_blank" rel="noopener noreferrer">https://groq.com/privacy-policy/</a></li>
         <li>Data is processed temporarily and not stored by Groq for our purposes</li>
       </ul>
 
       <h3>Database Provider (Supabase)</h3>
       <ul>
         <li>Resume and chatbot configuration data is stored securely</li>
-        <li>Supabase's privacy policy: <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">https://supabase.com/privacy</a></li>
+        <li>Supabase&apos;s privacy policy: <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">https://supabase.com/privacy</a></li>
         <li>Row Level Security ensures data privacy</li>
       </ul>
 
       <h3>Analytics Provider (Google Analytics)</h3>
       <ul>
         <li>Only used with explicit user consent</li>
-        <li>Google's privacy policy: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">https://policies.google.com/privacy</a></li>
+        <li>Google&apos;s privacy policy: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">https://policies.google.com/privacy</a></li>
       </ul>
 
       <h2>Cookies</h2>

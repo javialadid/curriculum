@@ -17,6 +17,12 @@ jest.mock('next/navigation', () => ({
   },
 }))
 
+// Mock Next.js cache
+jest.mock('next/cache', () => ({
+  unstable_cache: jest.fn((fn) => fn),
+  unstable_noStore: jest.fn(),
+}))
+
 // Mock environment variables
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
 process.env.SUPABASE_ANON_KEY = 'test-anon-key'

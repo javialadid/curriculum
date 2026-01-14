@@ -86,4 +86,78 @@ body {
   .no-print {
     display: none !important;
   }
+
+  /* Reset page margins for maximum content space */
+  @page {
+    margin: 0.4in 0.4in 0.4in 0.4in;
+    size: A4;
+  }
+
+  /* Make normal text darker for better print readability */
+  body {
+    color: #1a1a1a !important;
+    font-size: 9pt !important;
+    line-height: 1.5 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Darken foreground text in print */
+  .text-foreground {
+    color: #1a1a1a !important;
+  }
+
+  /* Make muted text darker but still distinguishable */
+  .text-muted-foreground {
+    color: #4a4a4a !important;
+  }
+
+  /* Section headers */
+  section h2 {
+    font-size: 10pt !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  /* Experience items spacing */
+  .print-compact-exp {
+    margin-bottom: 0.6rem !important;
+  }
+
+  /* Prevent page breaks inside items */
+  .print-keep-together {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Paragraph spacing in prose - more breathing room */
+  .prose p {
+    margin-bottom: 0.35rem !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Compact padding on main container */
+  .print-container {
+    padding: 0 !important;
+  }
+
+  /* Blue color for print */
+  .text-blue {
+    color: #1d4ed8 !important;
+  }
+
+  /* Ensure adequate line height for all text to prevent clipping */
+  * {
+    line-height: 1.45 !important;
+  }
+
+  /* Section vertical gaps */
+  section {
+    margin-bottom: 0.6rem !important;
+  }
+
+  /* Right column panel styling for print */
+  .print-right-panel {
+    background: #f3f4f6 !important;
+    border: 1px solid #e5e7eb !important;
+  }
 }
