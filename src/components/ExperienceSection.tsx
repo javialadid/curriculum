@@ -41,8 +41,8 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
             <div key={idx} className="mb-8 print-compact-exp print-keep-together">
               <div className="flex justify-between items-start mb-2 flex-wrap print:mb-1">
                 <div>
-                  <div className="text-lg font-bold text-blue print:text-xs print:font-semibold">{exp.title}</div>
-                  <div className="text-lg font-medium text-foreground print:text-xs">{exp.company}</div>
+                  <div className="text-lg font-bold text-blue print:text-xs print:font-bold">{exp.title}</div>
+                  <div className="text-lg font-medium text-foreground print:text-xs print:font-bold">{exp.company}</div>
                 </div>
                 <div className="text-sm italic text-muted-foreground whitespace-nowrap print:text-xs print:not-italic">
                   {exp.location} | {exp.startDate} – {exp.endDate}

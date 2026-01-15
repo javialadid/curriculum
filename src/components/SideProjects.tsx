@@ -32,7 +32,7 @@ export function SideProjects({ projects }: SideProjectsProps) {
       </h2>
       {projects.map((project: SideProjectItem, idx: number) => (
         <div key={idx} className="mb-4 print:mb-2">
-          <div className="text-base font-medium text-foreground mb-2 print:text-xs print:mb-1">{project.title}</div>
+          <div className="text-base font-medium text-foreground mb-2 print:text-xs print:mb-1 print:font-bold">{project.title}</div>
           <div className="mb-2 prose prose-sm max-w-none font-light print:text-xs print:mb-1">
             <ReactMarkdown components={markdownComponents}>{preprocessText(project.summary)}</ReactMarkdown>
           </div>

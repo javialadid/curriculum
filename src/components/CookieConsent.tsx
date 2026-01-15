@@ -75,7 +75,7 @@ export function CookieConsent({ gaEnabled = false }: CookieConsentProps) {
   if (!showBanner || hasConsented) return null
 
   return (
-    <div className="fixed bottom-0 left-2 sm:left-1/2 sm:-translate-x-1/2 z-50 bg-background border border-border rounded-lg p-2 shadow-lg">
+    <div className="fixed bottom-0 left-2 sm:left-1/2 sm:-translate-x-1/2 z-50 bg-background border border-border rounded-lg p-2 shadow-lg print:hidden">
       <div className="flex items-center gap-3">
         <Cookie className="w-4 h-4 text-muted-foreground" />
 

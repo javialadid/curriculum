@@ -13,7 +13,7 @@ export function SkillsSection({ skills }: SkillsSectionProps) {
           {Object.entries(skills).map(([category, categorySkills]) => (
             categorySkills.length > 0 && (
               <div key={category} className="pb-3 border-b border-border print:border-b-0 last:border-b-0 last:pb-0 print:pb-1">
-                <span className="font-medium text-foreground mr-1 print:text-xs print:block print:mb-0.5">{category}:</span>
+                <span className="font-medium text-foreground mr-1 print:text-xs print:block print:mb-0.5 print:font-bold">{category}:</span>
                 <span className="text-muted-foreground print:text-xs">{categorySkills.join(', ')}</span>
               </div>
             )
