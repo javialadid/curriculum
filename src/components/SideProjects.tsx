@@ -40,19 +40,15 @@ export function SideProjects({ projects }: SideProjectsProps) {
             <div className="flex flex-wrap gap-4 mt-2 print:mt-1 print:gap-1">
               {Object.entries(project.links).map(([label, url], lIdx) => (
                 <span key={lIdx} className="block">
-                  <span className="print:hidden">
-                    <a
-                      href={url as string}
-                      className="text-blue hover:underline text-sm font-medium"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {label}
-                    </a>
-                  </span>
-                  <span className="hidden print:inline text-xs text-blue break-all">
-                    {url as string}
-                  </span>
+                  <a
+                    href={url as string}
+                    className="text-blue hover:underline text-sm font-medium print:text-xs print:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span className="print:hidden">{label}</span>
+                    <span className="hidden print:inline break-all">{url as string}</span>
+                  </a>
                 </span>
               ))}
             </div>

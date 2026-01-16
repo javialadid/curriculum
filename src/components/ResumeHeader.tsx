@@ -44,7 +44,10 @@ export function ResumeHeader({ name, photo, tagLine, currentLocation }: ResumeHe
 
       {/* Print-only URL underneath location */}
       <div className="hidden print:block text-center text-xs text-muted-foreground mt-1">
-        Please check out the interactive version with chatbot: {currentUrl}
+        Please check out the interactive version with chatbot:{' '}
+        <a href={currentUrl} className="text-blue underline">
+          {currentUrl}
+        </a>
       </div>
     </header>
   )
