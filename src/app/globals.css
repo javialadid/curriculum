@@ -86,27 +86,31 @@ body {
   .no-print {
     display: none !important;
   }
-  
 
-  /* Reset page margins for maximum content space */
+  /* Standard page setup */
   @page {
-    margin: 0.4in 0.4in 0.4in 0.4in;
+    margin: 0.5in;
     size: A4;
   }
 
-  /* Make normal text darker for better print readability */
+  /* ATS-friendly body: standard font, black text, no letter-spacing */
   body {
-    color: #1a1a1a !important;
-    font-size: 12pt !important;
-    letter-spacing: 0.04em !important;
+    color: #000 !important;
+    font-size: 11pt !important;
     line-height: 1.4 !important;
     font-weight: 400 !important;
-    font-family: var(--font-geist-sans),"SF Pro Text", "SF Pro Display", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
+    font-family: Arial, Helvetica, sans-serif !important;
+    background: white !important;
+    letter-spacing: normal !important;
+    -webkit-font-smoothing: auto;
+  }
+
+  /* Remove all backgrounds, shadows, decorative elements for ATS */
+  * {
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    letter-spacing: normal !important;
   }
 
   /* Override Tailwind font-weight classes for print */
@@ -121,7 +125,6 @@ body {
     font-weight: 700 !important;
   }
 
-  /* Make print:font-bold even bolder */
   .print\:font-bold {
     font-weight: 700 !important;
   }
@@ -140,30 +143,45 @@ body {
     font-weight: 700 !important;
   }
 
-  /* Ensure headings have proper weight */
+  /* Ensure headings have proper weight and black color */
   h1, h2, h3, h4, h5, h6 {
     font-weight: 700 !important;
+    color: #000 !important;
   }
 
-  /* Darken foreground text in print */
+  /* All text black for ATS readability */
   .text-foreground {
-    color: #1a1a1a !important;
+    color: #000 !important;
   }
 
-  /* Make muted text darker but still distinguishable */
   .text-muted-foreground {
-    color: #4a4a4a !important;
+    color: #333 !important;
   }
 
-  /* Section headers */
+  /* Blue text becomes black for ATS */
+  .text-blue {
+    color: #000 !important;
+  }
+
+  /* Section headers - clear visual break */
   section h2 {
-    font-size: 16pt !important;
+    font-size: 11pt !important;
     margin-bottom: 0.4rem !important;
+    margin-top: 0.6rem !important;
+    border-bottom: 1.5pt solid #000 !important;
+    padding-bottom: 0.2rem !important;
+    text-transform: uppercase !important;
   }
 
-  /* Experience items spacing */
+  /* Experience items - clear separation between entries */
   .print-compact-exp {
-    margin-bottom: 0.6rem !important;
+    margin-bottom: 0.15rem !important;
+    padding-bottom: 0.5rem !important;
+    border-bottom: 0.5pt solid #ccc !important;
+  }
+
+  .print-compact-exp:last-child {
+    border-bottom: none !important;
   }
 
   /* Prevent page breaks inside items */
@@ -172,10 +190,10 @@ body {
     page-break-inside: avoid;
   }
 
-  /* Paragraph spacing in prose - more breathing room */
+  /* Paragraph spacing in prose */
   .prose p {
-    margin-bottom: 0.35rem !important;
-    line-height: 1.4 !important;
+    margin-bottom: 0.2rem !important;
+    line-height: 1.35 !important;
   }
 
   /* Compact padding on main container */
@@ -183,33 +201,25 @@ body {
     padding: 0 !important;
   }
 
-  /* Blue color for print */
-  .text-blue {
-    color: #1d4ed8 !important;
-  }
-
-  /* Ensure adequate line height for all text to prevent clipping */
-  * {
-    line-height: 1.4 !important;
-    overflow: visible !important;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-  
-  /* Add padding to text elements to prevent clipping at zoom */
-  p, span, li, div {
-    padding-top: 1px !important;
-    padding-bottom: 1px !important;
-  }
-
   /* Section vertical gaps */
   section {
     margin-bottom: 0.6rem !important;
   }
 
-  /* Right column panel styling for print */
-  .print-right-panel {
-    background: #f3f4f6 !important;
-    border: 1px solid #e5e7eb !important;
+  /* Bullet points in experience - tighter but readable */
+  .print-compact-exp li {
+    margin-bottom: 0.15rem !important;
+    line-height: 1.35 !important;
+  }
+
+  /* Links - underline with black text for ATS */
+  a {
+    color: #000 !important;
+    text-decoration: underline !important;
+  }
+
+  /* Remove border colors - use black */
+  .border-blue, .border-border {
+    border-color: #000 !important;
   }
 }

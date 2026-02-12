@@ -21,7 +21,7 @@ export function ResumeHeader({ name, photo, tagLine, currentLocation }: ResumeHe
   }, [pathname])
 
   return (
-    <header className="text-center pb-6 sm:pb-8 mb-6 sm:mb-8 border-b-4 border-blue print:pb-2 print:mb-3 print:border-b-2 print:border-blue">
+    <header className="text-center pb-6 sm:pb-8 mb-6 sm:mb-8 border-b-4 border-blue print:pb-2 print:mb-3 print:border-b-2">
 
       {photo && (
         <div className="flex justify-center mb-6 print:hidden">
@@ -34,7 +34,7 @@ export function ResumeHeader({ name, photo, tagLine, currentLocation }: ResumeHe
           />
         </div>
       )}
-      <h1 className="text-3xl sm:text-5xl font-bold mb-3 text-foreground print:text-black print:text-xl print:mb-1">{name}</h1>
+      <h1 className="text-3xl sm:text-5xl font-bold mb-3 text-foreground print:text-xl print:mb-1">{name}</h1>
       {tagLine && (
         <div className="text-lg sm:text-xl font-light text-muted-foreground mb-2 print:text-xs print:mb-1">{tagLine}</div>
       )}

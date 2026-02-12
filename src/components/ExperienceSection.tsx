@@ -36,19 +36,19 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
         <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-border print:text-black flex items-center print:mb-2 print:text-sm">
           <span className="mr-3 text-lg print:hidden">💼</span> Experience
         </h2>
-        <div className="space-y-8 print:space-y-4">
+        <div className="space-y-8 print:space-y-0">
           {mainExperience.map((exp, idx) => (
             <div key={idx} className="mb-8 print-compact-exp print-keep-together">
-              <div className="flex justify-between items-start mb-2 flex-wrap print:mb-1">
+              <div className="flex justify-between items-start mb-2 flex-wrap print:mb-0.5">
                 <div>
                   <div className="text-lg font-bold text-blue print:text-xs print:font-bold">{exp.title}</div>
-                  <div className="text-lg font-medium text-foreground print:text-xs print:font-bold">{exp.company}</div>
+                  <div className="text-lg font-medium text-foreground print:text-xs print:font-semibold">{exp.company}</div>
                 </div>
                 <div className="text-sm italic text-muted-foreground whitespace-nowrap print:text-xs print:not-italic">
                   {exp.location} | {exp.startDate} – {exp.endDate}
                 </div>
               </div>
-              <ul className="list-none pl-0 mt-3 print:mt-1 print:list-disc print:pl-3 print:marker:text-blue">
+              <ul className="list-none pl-0 mt-3 print:mt-0.5 print:list-disc print:pl-4">
                 {exp.highlights && exp.highlights.length > 0 && (
                   exp.highlights.map((highlight, hIdx) => (
                     <li key={hIdx} className="relative pl-5 mb-2 text-base leading-relaxed font-light print:pl-0 print:text-xs print:mb-1">
@@ -73,33 +73,41 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
                 )}
               </ul>
               {exp.technologies && exp.technologies.length > 0 && (
-                <div className="mt-3 print:hidden">
-                  <button
-                    onClick={() => setExpandedTech(expandedTech === idx ? null : idx)}
-                    className="text-sm text-blue hover:text-blue/80 flex items-center gap-1 cursor-pointer"
-                    title="View technologies used"
-                  >
-                    <span className="print:hidden">🛠️</span>
-                    <span className="underline underline-offset-2">Technologies</span>
-                    <span className="ml-1 text-xs">
-                      {expandedTech === idx ? '▲' : '▼'}
-                    </span>
-                  </button>
-                  {expandedTech === idx && (
-                    <div className="mt-2 p-3 bg-muted/50 rounded border border-border">
-                      <div className="flex flex-wrap gap-2">
-                        {exp.technologies.map((tech, techIdx) => (
-                          <span
-                            key={techIdx}
-                            className="bg-blue/10 text-blue px-2 py-1 rounded text-xs"
-                          >
-                            {tech}
-                          </span>
-                        ))}
+                <>
+                  {/* Interactive technologies (screen only) */}
+                  <div className="mt-3 print:hidden">
+                    <button
+                      onClick={() => setExpandedTech(expandedTech === idx ? null : idx)}
+                      className="text-sm text-blue hover:text-blue/80 flex items-center gap-1 cursor-pointer"
+                      title="View technologies used"
+                    >
+                      <span className="print:hidden">🛠️</span>
+                      <span className="underline underline-offset-2">Technologies</span>
+                      <span className="ml-1 text-xs">
+                        {expandedTech === idx ? '▲' : '▼'}
+                      </span>
+                    </button>
+                    {expandedTech === idx && (
+                      <div className="mt-2 p-3 bg-muted/50 rounded border border-border">
+                        <div className="flex flex-wrap gap-2">
+                          {exp.technologies.map((tech, techIdx) => (
+                            <span
+                              key={techIdx}
+                              className="bg-blue/10 text-blue px-2 py-1 rounded text-xs"
+                            >
+                              {tech}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                  {/* Plain-text technologies for print/ATS */}
+                  <div className="hidden print:block mt-1 text-xs">
+                    <span className="font-bold">Technologies: </span>
+                    {exp.technologies.join(', ')}
+                  </div>
+                </>
               )}
             </div>
           ))}

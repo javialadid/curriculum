@@ -42,17 +42,17 @@ export function ResumeDisplay({ resume }: ResumeDisplayProps) {
           currentLocation={resume.current_location}
         />
 
-        {/* Main Content - Two Column Layout */}
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 print:flex-row print:gap-4">
+        {/* Main Content - Two Column Layout (screen), Single Column (print/ATS) */}
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 print:flex-col print:gap-0">
           {/* Left Column - Experience */}
-          <div className="w-full lg:flex-2 print:w-[62%] print:flex-none">
+          <div className="w-full lg:flex-2 print:w-full">
             <ProfessionalSummary summary={resume.summary} />
 
             <ExperienceSection mainExperience={mainExperience} />
           </div>
 
           {/* Right Column - Skills, Education, Projects */}
-          <div className="w-full lg:flex-1 lg:mt-0 mt-8 bg-muted/30 lg:p-4 lg:rounded-lg print:w-[35%] print:flex-none print:mt-0 print:p-3 print:rounded print-right-panel">
+          <div className="w-full lg:flex-1 lg:mt-0 mt-8 bg-muted/30 lg:p-4 lg:rounded-lg print:w-full print:mt-0 print:p-0 print:bg-transparent print:rounded-none">
             <SkillsSection skills={skills} />
 
             <SideProjects projects={sideProjects} />
