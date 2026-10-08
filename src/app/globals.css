@@ -326,10 +326,13 @@ body {
     border-color: hsl(var(--blue)) !important;
   }
 
+  /* Blue rule sits under Contact in print; drop the screen header rule there. */
   header.border-blue,
   header.border-b-4,
   header[class*="border-blue"] {
-    border-bottom-color: hsl(var(--blue)) !important;
+    border-bottom: none !important;
+    margin-bottom: 4pt !important;
+    padding-bottom: 0 !important;
   }
 
   /* Skills category labels */
