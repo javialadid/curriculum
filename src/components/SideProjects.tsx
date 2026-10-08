@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { MarkdownLink } from './markdown'
 
 interface SideProjectItem {
   links: { [key: string]: string }
@@ -18,13 +19,14 @@ const markdownComponents = {
     </p>
   ),
   br: (props: ComponentProps<'br'>) => <br {...props} />,
+  a: ({ href, children }: ComponentProps<'a'>) => (
+    <MarkdownLink href={href} className="text-blue hover:underline">
+      {children}
+    </MarkdownLink>
+  ),
 }
 
 const preprocessText = (text: string) => text.replace(/\n/g, '\n\n')
-
-function displayUrl(url: string) {
-  return url.replace(/^https?:\/\//i, '').replace(/\/$/, '')
-}
 
 export function SideProjects({ projects }: SideProjectsProps) {
   if (projects.length === 0) return null
@@ -60,11 +62,9 @@ export function SideProjects({ projects }: SideProjectsProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
+                    {/* Screen: short labels as on main. Print: full URL as real text. */}
                     <span className="print:hidden">{label}</span>
-                    <span className="hidden print:inline">
-                      <span className="font-semibold text-foreground">{label}: </span>
-                      {displayUrl(url as string)}
-                    </span>
+                    <span className="hidden print:inline">{url as string}</span>
                   </a>
                 </span>
               ))}

@@ -1,7 +1,4 @@
-'use client'
-
-import { useEffect, useState, type ReactNode } from 'react'
-import { usePathname } from 'next/navigation'
+import type { ReactNode } from 'react'
 
 interface ContactSectionProps {
   location?: string
@@ -22,20 +19,13 @@ export function ContactSection({
   linkedin,
   website,
 }: ContactSectionProps) {
-  const pathname = usePathname()
-  const [pageUrl, setPageUrl] = useState('')
-
-  useEffect(() => {
-    setPageUrl(window.location.origin + pathname)
-  }, [pathname])
-
-  const resolvedWebsite = website?.trim() || pageUrl
+  const websiteValue = website?.trim() || ''
   const hasAny =
     Boolean(location) ||
     Boolean(email) ||
     Boolean(phone) ||
     Boolean(linkedin) ||
-    Boolean(resolvedWebsite)
+    Boolean(websiteValue)
 
   if (!hasAny) return null
 
@@ -99,12 +89,12 @@ export function ContactSection({
     )
   }
 
-  if (resolvedWebsite) {
+  if (websiteValue) {
     pushPart(
       <span key="website">
         <span className="font-semibold text-foreground">Website: </span>
-        <a href={resolvedWebsite} className="text-blue underline">
-          {displayUrl(resolvedWebsite)}
+        <a href={websiteValue} className="text-blue underline">
+          {displayUrl(websiteValue)}
         </a>
       </span>
     )

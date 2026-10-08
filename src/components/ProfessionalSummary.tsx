@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { MarkdownLink } from './markdown'
 
 interface ProfessionalSummaryProps {
   summary: string
@@ -12,6 +13,11 @@ const markdownComponents = {
     </p>
   ),
   br: (props: ComponentProps<'br'>) => <br {...props} />,
+  a: ({ href, children }: ComponentProps<'a'>) => (
+    <MarkdownLink href={href} className="text-blue hover:underline">
+      {children}
+    </MarkdownLink>
+  ),
 }
 
 const preprocessText = (text: string) => text.replace(/\n/g, '\n\n')

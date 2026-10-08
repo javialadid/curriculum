@@ -1,6 +1,8 @@
 'use client'
 
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 interface ResumeHeaderProps {
   name: string
@@ -10,6 +12,14 @@ interface ResumeHeaderProps {
 }
 
 export function ResumeHeader({ name, photo, tagLine, currentLocation }: ResumeHeaderProps) {
+  const pathname = usePathname()
+  const [currentUrl, setCurrentUrl] = useState('')
+
+  // Set the current URL after mount to avoid hydration mismatch (same pattern as main)
+  useEffect(() => {
+    setCurrentUrl(window.location.origin + pathname)
+  }, [pathname])
+
   return (
     <header className="text-center pb-6 sm:pb-8 mb-6 sm:mb-8 border-b-4 border-blue print:pb-2 print:mb-3 print:border-b-[1.5pt] print:border-blue">
       {photo && (
@@ -36,6 +46,14 @@ export function ResumeHeader({ name, photo, tagLine, currentLocation }: ResumeHe
           {currentLocation}
         </div>
       )}
+
+      {/* Print-only interactive site line (restored from main) */}
+      <div className="hidden print:block text-center text-xs text-muted-foreground mt-1">
+        Please check out the interactive version with chatbot:{' '}
+        <a href={currentUrl} className="text-blue underline">
+          {currentUrl}
+        </a>
+      </div>
     </header>
   )
 }

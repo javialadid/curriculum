@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { ComponentProps } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { MarkdownLink } from './markdown'
 
 interface ExperienceItem {
   company: string
@@ -70,6 +71,11 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
                           p: ({ children, ...props }: ComponentProps<'span'>) => (
                             <span {...props}>{children}</span>
                           ),
+                          a: ({ href, children }: ComponentProps<'a'>) => (
+                            <MarkdownLink href={href} className="text-blue hover:underline">
+                              {children}
+                            </MarkdownLink>
+                          ),
                         }}
                       >
                         {preprocessText(highlight)}
@@ -87,6 +93,11 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
                       components={{
                         p: ({ children, ...props }: ComponentProps<'span'>) => (
                           <span {...props}>{children}</span>
+                        ),
+                        a: ({ href, children }: ComponentProps<'a'>) => (
+                          <MarkdownLink href={href} className="text-blue hover:underline">
+                            {children}
+                          </MarkdownLink>
                         ),
                       }}
                     >
