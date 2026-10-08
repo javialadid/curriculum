@@ -178,10 +178,18 @@ body {
     color: hsl(var(--muted-foreground)) !important;
   }
 
+  /* Compact interactive URL line restored in the header */
+  .print-interactive-url {
+    font-size: 8.5pt !important;
+    line-height: 1.25 !important;
+    margin-top: 2pt !important;
+    margin-bottom: 0 !important;
+  }
+
   .print-contact {
-    margin-top: 0 !important;
-    margin-bottom: 8pt !important;
-    padding-bottom: 8pt !important;
+    margin-top: 4pt !important;
+    margin-bottom: 6pt !important;
+    padding-bottom: 6pt !important;
     border-bottom: 1.5pt solid hsl(var(--blue)) !important;
   }
 
@@ -266,7 +274,7 @@ body {
   }
 
   .print-compact-exp {
-    margin-bottom: 8pt !important;
+    margin-bottom: 6pt !important;
   }
 
   .print-compact-exp ul,

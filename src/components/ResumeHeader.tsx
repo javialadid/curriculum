@@ -48,7 +48,7 @@ export function ResumeHeader({ name, photo, tagLine, currentLocation }: ResumeHe
       )}
 
       {/* Print-only interactive site line (restored from main) */}
-      <div className="hidden print:block text-center text-xs text-muted-foreground mt-1">
+      <div className="hidden print:block print-interactive-url text-center text-xs text-muted-foreground mt-1">
         Please check out the interactive version with chatbot:{' '}
         <a href={currentUrl} className="text-blue underline">
           {currentUrl}
