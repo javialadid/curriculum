@@ -43,7 +43,7 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
         {mainExperience.map((exp, idx) => (
           <article key={idx} className="mb-8 print-compact-exp print-keep-together">
             <div className="print-job-header">
-              <div className="flex justify-between items-start mb-2 flex-wrap gap-x-4 print:mb-0.5 print:flex-col print:items-start">
+              <div className="flex justify-between items-start mb-2 flex-wrap print:mb-0.5 print:flex-col print:items-start">
                 <div>
                   <h3 className="text-lg font-bold text-blue">{exp.title}</h3>
                   <p className="text-lg font-medium text-foreground">{exp.company}</p>
@@ -59,7 +59,7 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
                 exp.highlights.map((highlight, hIdx) => (
                   <li
                     key={hIdx}
-                    className="relative pl-5 mb-2 text-base leading-relaxed font-light print:pl-0 print:mb-0.5"
+                    className="relative pl-5 mb-2 text-base leading-relaxed font-light print:static print:pl-0 print:mb-0.5"
                   >
                     <span className="absolute left-0 text-blue font-bold print:hidden" aria-hidden="true">
                       —
@@ -78,7 +78,7 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
                   </li>
                 ))}
               {exp.description && (
-                <li className="relative pl-5 mb-2 text-base leading-relaxed font-light print:pl-0 print:mb-0.5">
+                <li className="relative pl-5 mb-2 text-base leading-relaxed font-light print:static print:pl-0 print:mb-0.5">
                   <span className="absolute left-0 text-blue-600 font-bold print:hidden" aria-hidden="true">
                     —
                   </span>

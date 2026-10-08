@@ -40,7 +40,9 @@ export function PrintButton({ className }: PrintButtonProps) {
         window.print()
       }}
       className={cn(
-        'no-print inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium',
+        'no-print inline-flex items-center justify-center rounded-full text-sm font-medium',
+        // Icon-only below sm so the control does not cover the header photo on narrow viewports
+        'h-9 w-9 p-0 gap-0 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2',
         'bg-background shadow-lg border border-border',
         'hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
         className
@@ -48,7 +50,7 @@ export function PrintButton({ className }: PrintButtonProps) {
       aria-label="Download PDF or Print"
     >
       <Printer className="h-4 w-4" aria-hidden="true" />
-      <span>Download PDF / Print</span>
+      <span className="sr-only sm:not-sr-only">Download PDF / Print</span>
     </button>
   )
 }

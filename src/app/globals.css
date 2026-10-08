@@ -137,13 +137,13 @@ body {
   }
 
   .font-light,
-  .font-normal,
-  .font-medium {
+  .font-normal {
     font-weight: 400 !important;
   }
 
   .font-semibold,
   .font-bold,
+  .print\:font-semibold,
   .print\:font-bold {
     font-weight: 700 !important;
   }
@@ -226,6 +226,7 @@ body {
   }
 
   article h3,
+  article h3.font-medium,
   .print-compact-exp h3 {
     font-size: 10.5pt !important;
     font-weight: 700 !important;
@@ -242,12 +243,20 @@ body {
     line-height: 1.3 !important;
   }
 
+  /* Company / meta under job titles — stronger than body, not education institutions */
   .print-compact-exp .font-medium,
   .print-compact-exp p.font-medium,
-  article h3 + p {
+  .print-compact-exp h3 + p {
     font-size: 10pt !important;
     font-weight: 600 !important;
     color: hsl(var(--foreground)) !important;
+  }
+
+  /* Education institution stays lighter than the degree (h3) */
+  section[aria-labelledby="education-heading"] h3 + p {
+    font-size: 9pt !important;
+    font-weight: 400 !important;
+    color: hsl(var(--muted-foreground)) !important;
   }
 
   .print-compact-exp .text-muted-foreground,
@@ -335,10 +344,11 @@ body {
     padding-bottom: 0 !important;
   }
 
-  /* Skills category labels */
-  section .font-medium,
-  section .font-semibold {
+  /* Skills category labels only — do not shrink section h2 headings */
+  #skills-heading ~ div .font-medium,
+  #skills-heading ~ div .font-semibold {
     font-size: 9.5pt !important;
+    font-weight: 600 !important;
   }
 
   /* Soften right-panel screen styles in print */
