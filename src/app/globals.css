@@ -83,33 +83,36 @@ body {
 }
 
 @media print {
-  .no-print {
+  .no-print,
+  .print\:hidden {
     display: none !important;
   }
-  
 
-  /* Reset page margins for maximum content space */
   @page {
-    margin: 0.4in 0.4in 0.4in 0.4in;
+    margin: 12mm;
     size: A4;
   }
 
-  /* Make normal text darker for better print readability */
+  html,
   body {
-    color: #1a1a1a !important;
-    font-size: 12pt !important;
-    letter-spacing: 0.04em !important;
-    line-height: 1.4 !important;
+    color: #000 !important;
+    background: white !important;
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
     font-weight: 400 !important;
-    font-family: var(--font-geist-sans),"SF Pro Text", "SF Pro Display", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    letter-spacing: normal !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
   }
 
-  /* Override Tailwind font-weight classes for print */
+  * {
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    letter-spacing: normal !important;
+  }
+
   .font-light,
   .font-normal,
   .font-medium {
@@ -117,16 +120,11 @@ body {
   }
 
   .font-semibold,
-  .font-bold {
-    font-weight: 700 !important;
-  }
-
-  /* Make print:font-bold even bolder */
+  .font-bold,
   .print\:font-bold {
     font-weight: 700 !important;
   }
 
-  /* Override prose font weights for print */
   .prose,
   .prose *,
   .prose p,
@@ -140,76 +138,85 @@ body {
     font-weight: 700 !important;
   }
 
-  /* Ensure headings have proper weight */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-weight: 700 !important;
+    color: #000 !important;
   }
 
-  /* Darken foreground text in print */
   .text-foreground {
-    color: #1a1a1a !important;
+    color: #000 !important;
   }
 
-  /* Make muted text darker but still distinguishable */
   .text-muted-foreground {
-    color: #4a4a4a !important;
+    color: #333 !important;
   }
 
-  /* Section headers */
+  .text-blue {
+    color: #000 !important;
+  }
+
   section h2 {
+    font-size: 11pt !important;
+    margin-bottom: 0.35rem !important;
+    margin-top: 0.5rem !important;
+    border-bottom: 1pt solid #000 !important;
+    padding-bottom: 0.15rem !important;
+    text-transform: uppercase !important;
+  }
+
+  h1 {
     font-size: 16pt !important;
-    margin-bottom: 0.4rem !important;
   }
 
-  /* Experience items spacing */
+  h3 {
+    font-size: 10pt !important;
+  }
+
   .print-compact-exp {
-    margin-bottom: 0.6rem !important;
+    margin-bottom: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
   }
 
-  /* Prevent page breaks inside items */
   .print-keep-together {
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  /* Paragraph spacing in prose - more breathing room */
   .prose p {
-    margin-bottom: 0.35rem !important;
-    line-height: 1.4 !important;
+    margin-bottom: 0.2rem !important;
+    line-height: 1.35 !important;
   }
 
-  /* Compact padding on main container */
   .print-container {
     padding: 0 !important;
+    max-width: none !important;
   }
 
-  /* Blue color for print */
-  .text-blue {
-    color: #1d4ed8 !important;
-  }
-
-  /* Ensure adequate line height for all text to prevent clipping */
-  * {
-    line-height: 1.4 !important;
-    overflow: visible !important;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-  
-  /* Add padding to text elements to prevent clipping at zoom */
-  p, span, li, div {
-    padding-top: 1px !important;
-    padding-bottom: 1px !important;
-  }
-
-  /* Section vertical gaps */
   section {
-    margin-bottom: 0.6rem !important;
+    margin-bottom: 0.45rem !important;
   }
 
-  /* Right column panel styling for print */
-  .print-right-panel {
-    background: #f3f4f6 !important;
-    border: 1px solid #e5e7eb !important;
+  .print-compact-exp li {
+    margin-bottom: 0.12rem !important;
+    line-height: 1.35 !important;
+  }
+
+  a {
+    color: #000 !important;
+    text-decoration: underline !important;
+  }
+
+  .border-blue,
+  .border-border {
+    border-color: #000 !important;
+  }
+
+  img {
+    display: none !important;
   }
 }

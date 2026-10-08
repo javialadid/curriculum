@@ -11,49 +11,59 @@ interface SideProjectsProps {
   projects: SideProjectItem[]
 }
 
-// Custom components for ReactMarkdown to handle line breaks (for summary and projects)
 const markdownComponents = {
-  p: ({ children, ...props }: ComponentProps<'p'>) => <p className="mb-3 last:mb-0" {...props}>{children}</p>,
+  p: ({ children, ...props }: ComponentProps<'p'>) => (
+    <p className="mb-3 last:mb-0" {...props}>
+      {children}
+    </p>
+  ),
   br: (props: ComponentProps<'br'>) => <br {...props} />,
 }
 
-// Helper function to preprocess text for line breaks (for summary and projects)
-const preprocessText = (text: string) => {
-  return text.replace(/\n/g, '\n\n') // Ensure double newlines for paragraphs
-}
+const preprocessText = (text: string) => text.replace(/\n/g, '\n\n')
 
 export function SideProjects({ projects }: SideProjectsProps) {
   if (projects.length === 0) return null
 
   return (
-    <section className="mb-8 print:mb-4 print-keep-together">
-      <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-border print:text-black flex items-center print:mb-2 print:text-sm">
-        <span className="mr-3 text-lg print:hidden">🔗</span> Side Projects
+    <section className="mb-8 print:mb-4 print-keep-together" aria-labelledby="projects-heading">
+      <h2
+        id="projects-heading"
+        className="text-xl font-semibold mb-6 pb-2 border-b border-border print:text-black flex items-center print:mb-2 print:text-sm"
+      >
+        <span className="mr-3 text-lg print:hidden" aria-hidden="true">
+          🔗
+        </span>
+        Side Projects
       </h2>
       {projects.map((project: SideProjectItem, idx: number) => (
-        <div key={idx} className="mb-4 print:mb-2">
-          <div className="text-base font-medium text-foreground mb-2 print:text-xs print:mb-1 print:font-bold">{project.title}</div>
+        <article key={idx} className="mb-4 print:mb-2">
+          <h3 className="text-base font-medium text-foreground mb-2 print:text-xs print:mb-1 print:font-bold">
+            {project.title}
+          </h3>
           <div className="mb-2 prose prose-sm max-w-none font-light print:text-xs print:mb-1">
-            <ReactMarkdown components={markdownComponents}>{preprocessText(project.summary)}</ReactMarkdown>
+            <ReactMarkdown components={markdownComponents}>
+              {preprocessText(project.summary)}
+            </ReactMarkdown>
           </div>
           {project.links && Object.keys(project.links).length > 0 && (
-            <div className="flex flex-wrap gap-4 mt-2 print:mt-1 print:gap-1">
+            <ul className="list-none space-y-1 mt-2 print:mt-1">
               {Object.entries(project.links).map(([label, url], lIdx) => (
-                <span key={lIdx} className="block">
+                <li key={lIdx} className="text-sm print:text-xs">
+                  <span className="font-medium text-foreground print:font-bold">{label}: </span>
                   <a
                     href={url as string}
-                    className="text-blue hover:underline text-sm font-medium print:text-xs print:underline"
+                    className="text-blue hover:underline break-all print:text-inherit print:underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <span className="print:hidden">{label}</span>
-                    <span className="hidden print:inline break-all">{url as string}</span>
+                    {url as string}
                   </a>
-                </span>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-        </div>
+        </article>
       ))}
     </section>
   )
