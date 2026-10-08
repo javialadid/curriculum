@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 interface ResumeHeaderProps {
   name: string
@@ -15,14 +15,13 @@ export function ResumeHeader({ name, photo, tagLine, currentLocation }: ResumeHe
   const pathname = usePathname()
   const [currentUrl, setCurrentUrl] = useState('')
 
-  // Set the current URL after component mounts to avoid hydration mismatch
+  // Set the current URL after mount to avoid hydration mismatch (same pattern as main)
   useEffect(() => {
     setCurrentUrl(window.location.origin + pathname)
   }, [pathname])
 
   return (
-    <header className="text-center pb-6 sm:pb-8 mb-6 sm:mb-8 border-b-4 border-blue print:pb-2 print:mb-3 print:border-b-2 print:border-blue">
-
+    <header className="text-center pb-6 sm:pb-8 mb-6 sm:mb-8 border-b-4 border-blue print:pb-2 print:mb-3 print:border-b-[1.5pt] print:border-blue">
       {photo && (
         <div className="flex justify-center mb-6 print:hidden">
           <Image
@@ -34,16 +33,22 @@ export function ResumeHeader({ name, photo, tagLine, currentLocation }: ResumeHe
           />
         </div>
       )}
-      <h1 className="text-3xl sm:text-5xl font-bold mb-3 text-foreground print:text-black print:text-xl print:mb-1">{name}</h1>
+      <h1 className="text-3xl sm:text-5xl font-bold mb-3 text-foreground print:mb-0.5">
+        {name}
+      </h1>
       {tagLine && (
-        <div className="text-lg sm:text-xl font-light text-muted-foreground mb-2 print:text-xs print:mb-1">{tagLine}</div>
+        <p className="text-lg sm:text-xl font-light text-muted-foreground mb-2 print:mb-0.5">
+          {tagLine}
+        </p>
       )}
       {currentLocation && (
-        <div className="text-sm sm:text-base text-muted-foreground print:text-xs">{currentLocation}</div>
+        <div className="text-sm sm:text-base text-muted-foreground print:hidden">
+          {currentLocation}
+        </div>
       )}
 
-      {/* Print-only URL underneath location */}
-      <div className="hidden print:block text-center text-xs text-muted-foreground mt-1">
+      {/* Print-only interactive site line (restored from main) */}
+      <div className="hidden print:block print-interactive-url text-center text-xs text-muted-foreground mt-1">
         Please check out the interactive version with chatbot:{' '}
         <a href={currentUrl} className="text-blue underline">
           {currentUrl}

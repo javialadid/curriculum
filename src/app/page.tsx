@@ -2,18 +2,25 @@ import type { Metadata } from 'next'
 import { fetchResume } from '@/hooks/useResume'
 import { ResumeDisplay } from '@/components/resume/ResumeDisplay'
 
+function buildDescription(resume: { name: string; summary?: string; tag_line?: string }) {
+  const raw = resume.summary || resume.tag_line || `Professional resume for ${resume.name}`
+  const plain = raw.replace(/\s+/g, ' ').trim()
+  return plain.length > 155 ? `${plain.slice(0, 152)}...` : plain
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const { resume } = await fetchResume()
 
   if (resume) {
     return {
-      title: `${resume.name} - Resume`,
-      description: `Professional resume for ${resume.name}`
+      title: `${resume.name} — Resume`,
+      description: buildDescription(resume),
     }
   }
 
   return {
-    title: 'Resume'
+    title: 'Resume',
+    description: 'Professional resume and interactive portfolio',
   }
 }
 
