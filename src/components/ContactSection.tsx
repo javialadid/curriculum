@@ -22,10 +22,11 @@ export function ContactSection({
   const [websiteUrl, setWebsiteUrl] = useState(website)
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setWebsiteUrl(window.location.origin + pathname)
-    }
-  }, [pathname])
+    if (typeof window === 'undefined') return
+    const origin = window.location.origin
+    const isLocal = /localhost|127\.0\.0\.1/.test(origin)
+    setWebsiteUrl(isLocal ? website : origin + pathname)
+  }, [pathname, website])
 
   const hasContact = location || email || phone || linkedin || websiteUrl
 
