@@ -13,7 +13,8 @@ export function SkillsSection({ skills }: SkillsSectionProps) {
           🛠️
         </span>
         <span className="print:hidden">Core Competencies</span>
-        {/* aria-hidden so screen AT only hears "Core Competencies"; PDF still gets visible "Skills" text */}
+        {/* Space keeps labels from merging in textContent; aria-hidden keeps screen AT on "Core Competencies" */}
+        {' '}
         <span className="hidden print:inline" aria-hidden="true">
           Skills
         </span>

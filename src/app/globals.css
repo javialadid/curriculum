@@ -178,8 +178,9 @@ body {
     color: hsl(var(--muted-foreground)) !important;
   }
 
-  /* Compact interactive URL line restored in the header */
-  .print-interactive-url {
+  /* Compact interactive URL line — must beat header .text-muted-foreground above */
+  header .print-interactive-url,
+  header .print-interactive-url.text-muted-foreground {
     font-size: 8.5pt !important;
     line-height: 1.25 !important;
     margin-top: 2pt !important;
@@ -215,7 +216,8 @@ body {
     margin-bottom: 8pt !important;
   }
 
-  section > h2 {
+  /* Any section heading, including those wrapped for print keep-together */
+  section h2 {
     font-size: 11.5pt !important;
     font-weight: 700 !important;
     line-height: 1.2 !important;
@@ -228,9 +230,14 @@ body {
     page-break-after: avoid;
   }
 
-  section:first-of-type > h2,
-  .print-contact + * section > h2:first-child {
+  section:first-of-type h2:first-of-type,
+  .print-contact + * section h2:first-of-type {
     margin-top: 0 !important;
+  }
+
+  /* Project link URLs: meet the 9pt print floor (screen stays text-sm) */
+  section[aria-labelledby="projects-heading"] a {
+    font-size: 9pt !important;
   }
 
   article h3,

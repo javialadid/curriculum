@@ -58,7 +58,7 @@ export function SideProjects({ projects }: SideProjectsProps) {
                 <span key={lIdx} className="block">
                   <a
                     href={url as string}
-                    className="text-blue hover:underline text-sm font-medium print:underline"
+                    className="text-blue hover:underline text-sm font-medium print:text-[9pt] print:underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
