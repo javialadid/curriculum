@@ -35,6 +35,10 @@ export interface Resume {
   photo?: string
   tag_line?: string
   current_location?: string
+  email?: string
+  phone?: string
+  linkedin?: string
+  website?: string
   created_at: string
   updated_at: string
 }

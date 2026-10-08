@@ -36,7 +36,13 @@ export function ResumeDisplay({ resume }: ResumeDisplayProps) {
       <article className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-12 print-container">
         <ResumeHeader name={resume.name} photo={resume.photo} tagLine={resume.tag_line} />
 
-        <ContactSection location={resume.current_location} />
+        <ContactSection
+          location={resume.current_location}
+          email={resume.email}
+          phone={resume.phone}
+          linkedin={resume.linkedin}
+          website={resume.website}
+        />
 
         {/*
           DOM order is linear for ATS/PDF text extraction:

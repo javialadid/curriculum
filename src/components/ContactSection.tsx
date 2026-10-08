@@ -1,8 +1,3 @@
-'use client'
-
-import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
-
 interface ContactSectionProps {
   location?: string
   email?: string
@@ -16,19 +11,9 @@ export function ContactSection({
   email,
   phone,
   linkedin,
-  website = 'https://resume-javier.vercel.app/',
+  website,
 }: ContactSectionProps) {
-  const pathname = usePathname()
-  const [websiteUrl, setWebsiteUrl] = useState(website)
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const origin = window.location.origin
-    const isLocal = /localhost|127\.0\.0\.1/.test(origin)
-    setWebsiteUrl(isLocal ? website : origin + pathname)
-  }, [pathname, website])
-
-  const hasContact = location || email || phone || linkedin || websiteUrl
+  const hasContact = location || email || phone || linkedin || website
 
   if (!hasContact) return null
 
@@ -79,14 +64,14 @@ export function ContactSection({
             </a>
           </li>
         )}
-        {websiteUrl && (
+        {website && (
           <li>
             <span className="font-medium text-foreground print:font-bold">Website: </span>
             <a
-              href={websiteUrl}
+              href={website}
               className="text-blue hover:underline break-all print:text-inherit print:underline"
             >
-              {websiteUrl}
+              {website}
             </a>
           </li>
         )}
