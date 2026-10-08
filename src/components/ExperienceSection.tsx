@@ -24,66 +24,90 @@ interface ExperienceSectionProps {
 export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
   const [expandedTech, setExpandedTech] = useState<number | null>(null)
 
-  // Helper function to preprocess text for line breaks
   const preprocessText = (text: string) => {
-    return text.replace(/\n/g, '\n\n') // Ensure double newlines for paragraphs
+    return text.replace(/\n/g, '\n\n')
   }
 
   return (
-    <>
-      {/* Professional Experience */}
-      <section>
-        <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-border print:text-black flex items-center print:mb-2 print:text-sm">
-          <span className="mr-3 text-lg print:hidden">💼</span> Experience
-        </h2>
-        <div className="space-y-8 print:space-y-4">
-          {mainExperience.map((exp, idx) => (
-            <div key={idx} className="mb-8 print-compact-exp print-keep-together">
-              <div className="flex justify-between items-start mb-2 flex-wrap print:mb-1">
+    <section aria-labelledby="experience-heading">
+      <h2
+        id="experience-heading"
+        className="text-xl font-semibold mb-6 pb-2 border-b border-border flex items-center print:mb-2"
+      >
+        <span className="mr-3 text-lg print:hidden" aria-hidden="true">
+          💼
+        </span>
+        Experience
+      </h2>
+      <div className="space-y-8 print:space-y-0">
+        {mainExperience.map((exp, idx) => (
+          <article key={idx} className="mb-8 print-compact-exp print-keep-together">
+            <div className="print-job-header">
+              <div className="flex justify-between items-start mb-2 flex-wrap gap-x-4 print:mb-0.5 print:flex-col print:items-start">
                 <div>
-                  <div className="text-lg font-bold text-blue print:text-xs print:font-bold">{exp.title}</div>
-                  <div className="text-lg font-medium text-foreground print:text-xs print:font-bold">{exp.company}</div>
+                  <h3 className="text-lg font-bold text-blue">{exp.title}</h3>
+                  <p className="text-lg font-medium text-foreground">{exp.company}</p>
                 </div>
-                <div className="text-sm italic text-muted-foreground whitespace-nowrap print:text-xs print:not-italic">
+                <p className="text-sm italic text-muted-foreground whitespace-nowrap print:not-italic">
                   {exp.location} | {exp.startDate} – {exp.endDate}
-                </div>
+                </p>
               </div>
-              <ul className="list-none pl-0 mt-3 print:mt-1 print:list-disc print:pl-3 print:marker:text-blue">
-                {exp.highlights && exp.highlights.length > 0 && (
-                  exp.highlights.map((highlight, hIdx) => (
-                    <li key={hIdx} className="relative pl-5 mb-2 text-base leading-relaxed font-light print:pl-0 print:text-xs print:mb-1">
-                      <span className="absolute left-0 text-blue font-bold print:hidden">—</span>
-                      <span className="prose prose-sm max-w-none">
-                        <ReactMarkdown components={{
-                          p: ({ children, ...props }: ComponentProps<'span'>) => <span {...props}>{children}</span>
-                        }}>{preprocessText(highlight)}</ReactMarkdown>
-                      </span>
-                    </li>
-                  ))
-                )}
-                {exp.description && (
-                  <li className="relative pl-5 mb-2 text-base leading-relaxed font-light print:pl-0 print:text-xs print:mb-1">
-                    <span className="absolute left-0 text-blue-600 font-bold print:hidden">—</span>
+            </div>
+            <ul className="list-none pl-0 mt-3 print:mt-1 print:list-disc print:pl-4 print:marker:text-blue">
+              {exp.highlights &&
+                exp.highlights.length > 0 &&
+                exp.highlights.map((highlight, hIdx) => (
+                  <li
+                    key={hIdx}
+                    className="relative pl-5 mb-2 text-base leading-relaxed font-light print:pl-0 print:mb-0.5"
+                  >
+                    <span className="absolute left-0 text-blue font-bold print:hidden" aria-hidden="true">
+                      —
+                    </span>
                     <span className="prose prose-sm max-w-none">
-                      <ReactMarkdown components={{
-                        p: ({ children, ...props }: ComponentProps<'span'>) => <span {...props}>{children}</span>
-                      }}>{preprocessText(exp.description)}</ReactMarkdown>
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children, ...props }: ComponentProps<'span'>) => (
+                            <span {...props}>{children}</span>
+                          ),
+                        }}
+                      >
+                        {preprocessText(highlight)}
+                      </ReactMarkdown>
                     </span>
                   </li>
-                )}
-              </ul>
-              {exp.technologies && exp.technologies.length > 0 && (
+                ))}
+              {exp.description && (
+                <li className="relative pl-5 mb-2 text-base leading-relaxed font-light print:pl-0 print:mb-0.5">
+                  <span className="absolute left-0 text-blue-600 font-bold print:hidden" aria-hidden="true">
+                    —
+                  </span>
+                  <span className="prose prose-sm max-w-none">
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children, ...props }: ComponentProps<'span'>) => (
+                          <span {...props}>{children}</span>
+                        ),
+                      }}
+                    >
+                      {preprocessText(exp.description)}
+                    </ReactMarkdown>
+                  </span>
+                </li>
+              )}
+            </ul>
+            {exp.technologies && exp.technologies.length > 0 && (
+              <>
                 <div className="mt-3 print:hidden">
                   <button
+                    type="button"
                     onClick={() => setExpandedTech(expandedTech === idx ? null : idx)}
                     className="text-sm text-blue hover:text-blue/80 flex items-center gap-1 cursor-pointer"
                     title="View technologies used"
                   >
-                    <span className="print:hidden">🛠️</span>
+                    <span aria-hidden="true">🛠️</span>
                     <span className="underline underline-offset-2">Technologies</span>
-                    <span className="ml-1 text-xs">
-                      {expandedTech === idx ? '▲' : '▼'}
-                    </span>
+                    <span className="ml-1 text-xs">{expandedTech === idx ? '▲' : '▼'}</span>
                   </button>
                   {expandedTech === idx && (
                     <div className="mt-2 p-3 bg-muted/50 rounded border border-border">
@@ -100,11 +124,15 @@ export function ExperienceSection({ mainExperience }: ExperienceSectionProps) {
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-    </>
+                <p className="hidden print:block print-tech-line">
+                  <span className="font-semibold text-foreground">Technologies: </span>
+                  {exp.technologies.join(', ')}
+                </p>
+              </>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
   )
 }
