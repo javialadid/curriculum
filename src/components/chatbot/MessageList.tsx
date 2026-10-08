@@ -1,9 +1,47 @@
+import type { ComponentProps } from 'react'
+import ReactMarkdown from 'react-markdown'
+import { MarkdownLink } from '@/components/markdown'
 import type { Message } from '@/types/chatbot'
 
 interface MessageListProps {
   messages: Message[]
   isLoading: boolean
   messagesEndRef: React.RefObject<HTMLDivElement | null>
+}
+
+const assistantMarkdownComponents = {
+  p: ({ children, ...props }: ComponentProps<'p'>) => (
+    <p className="mb-2 last:mb-0" {...props}>
+      {children}
+    </p>
+  ),
+  ul: ({ children, ...props }: ComponentProps<'ul'>) => (
+    <ul className="list-disc pl-4 mb-2 last:mb-0 space-y-1" {...props}>
+      {children}
+    </ul>
+  ),
+  ol: ({ children, ...props }: ComponentProps<'ol'>) => (
+    <ol className="list-decimal pl-4 mb-2 last:mb-0 space-y-1" {...props}>
+      {children}
+    </ol>
+  ),
+  li: ({ children, ...props }: ComponentProps<'li'>) => (
+    <li {...props}>{children}</li>
+  ),
+  strong: ({ children, ...props }: ComponentProps<'strong'>) => (
+    <strong className="font-semibold" {...props}>
+      {children}
+    </strong>
+  ),
+  em: ({ children, ...props }: ComponentProps<'em'>) => (
+    <em {...props}>{children}</em>
+  ),
+  a: ({ href, children }: ComponentProps<'a'>) => (
+    <MarkdownLink href={href} className="underline">
+      {children}
+    </MarkdownLink>
+  ),
+  br: (props: ComponentProps<'br'>) => <br {...props} />,
 }
 
 export function MessageList({ messages, isLoading, messagesEndRef }: MessageListProps) {
@@ -26,7 +64,15 @@ export function MessageList({ messages, isLoading, messagesEndRef }: MessageList
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
             }`}
           >
-            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+            {message.role === 'assistant' ? (
+              <div className="text-sm break-words">
+                <ReactMarkdown components={assistantMarkdownComponents}>
+                  {message.content}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+            )}
           </div>
         </div>
       ))}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { fetchChatbotData, sendChatMessage } from '@/lib/chatbot-actions'
+import { buildChatbotSystemMessage } from '@/lib/chatbot-system-prompt'
 import type { Message, ChatbotData, Resume } from '@/types/chatbot'
 import { sendGAEvent } from '@/lib/utils'
 
@@ -137,9 +138,11 @@ export function useChatbot({ resume }: UseChatbotProps) {
 
     try {
       const resumeContext = resume ? `\n\nFull Resume Data:\n${JSON.stringify({ ...resume, name: undefined, slug: undefined, photo: undefined }, null, 2)}` : ''
-      const systemMessage = (!chatbotData.prompt || chatbotData.prompt.trim() === '')
-        ? `You are a helpful AI assistant that answers questions about the user's professional background based on the following bio and resume data. Be conversational and provide specific, relevant information.\n\nBio: ${chatbotData.bio}${resumeContext}`
-        : `${chatbotData.prompt}\n\nBio: ${chatbotData.bio}${resumeContext}`
+      const systemMessage = buildChatbotSystemMessage(
+        chatbotData.bio,
+        chatbotData.prompt,
+        resumeContext
+      )
       const responseContent = await sendChatMessage(systemMessage, conversationMessages)
 
       const assistantMessage: Message = {
