@@ -21,7 +21,9 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # Optional: Chatbot Configuration
 GROQ_API_KEY=your_groq_api_key
-NEXT_PUBLIC_GROQ_MODELNAME=llama-3.3-70b-versatile
+NEXT_PUBLIC_GROQ_MODELNAME=openai/gpt-oss-20b
+# Fallback suggestion for heavier workloads: openai/gpt-oss-120b
+GROQ_REASONING_EFFORT=medium
 NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES=20
 CHATBOT_MAX_MESSAGE_LENGTH=1000
 CHATBOT_MAX_CONVERSATION_LENGTH=10000
@@ -113,7 +115,8 @@ The chatbot is automatically enabled when you provide a `GROQ_API_KEY` in your e
 ### Chatbot Settings
 
 - **`GROQ_API_KEY`**: Your Groq API key for AI chat functionality
-- **`NEXT_PUBLIC_GROQ_MODELNAME`**: AI model to use (default: `llama-3.3-70b-versatile`)
+- **`NEXT_PUBLIC_GROQ_MODELNAME`**: AI model to use (default: `openai/gpt-oss-20b`; fallback suggestion: `openai/gpt-oss-120b`). Resolved server-side; client-supplied model values are ignored.
+- **`GROQ_REASONING_EFFORT`**: Reasoning effort for `openai/gpt-oss*` models (default: `medium`; options: `low`, `medium`, `high`, `none`). Set to `none` or leave empty to omit the parameter. Ignored for non-gpt-oss models.
 - **`NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES`**: Maximum number of AI responses per conversation (default: 20)
 - **`CHATBOT_MAX_MESSAGE_LENGTH`**: Maximum characters allowed per individual message (default: 1000)
 - **`CHATBOT_MAX_CONVERSATION_LENGTH`**: Maximum total characters for entire conversation before truncation (default: 10000)

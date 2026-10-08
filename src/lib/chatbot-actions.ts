@@ -44,13 +44,53 @@ export async function sanitizeMessage(content: string): Promise<string> {
   return sanitizedContent.trim()
 }
 
+const DEFAULT_GROQ_MODEL = 'openai/gpt-oss-20b'
+const VALID_REASONING_EFFORTS = new Set(['low', 'medium', 'high'])
+
+/** Resolve model from env; client-supplied values are ignored. Exported for tests. */
+export async function resolveGroqModel(): Promise<string> {
+  return process.env.NEXT_PUBLIC_GROQ_MODELNAME || DEFAULT_GROQ_MODEL
+}
+
+/**
+ * Resolve reasoning_effort for gpt-oss models only.
+ * Defaults to medium when unset. Returns undefined to omit the param
+ * (non-gpt-oss, or GROQ_REASONING_EFFORT set to none/empty).
+ * Invalid values fall back to medium. Exported for tests.
+ */
+export async function resolveReasoningEffort(model: string): Promise<'low' | 'medium' | 'high' | undefined> {
+  if (!model.startsWith('openai/gpt-oss')) {
+    return undefined
+  }
+
+  const raw = process.env.GROQ_REASONING_EFFORT
+  // Explicit none or empty string: omit the parameter entirely.
+  if (raw !== undefined && (raw.trim() === '' || raw.trim().toLowerCase() === 'none')) {
+    return undefined
+  }
+
+  // Unset: default to medium.
+  if (raw === undefined) {
+    return 'medium'
+  }
+
+  const normalized = raw.trim().toLowerCase()
+  if (VALID_REASONING_EFFORTS.has(normalized)) {
+    return normalized as 'low' | 'medium' | 'high'
+  }
+
+  // Invalid values fall back to medium.
+  return 'medium'
+}
+
 export async function sendChatMessage(
   systemMessage: string,
   messages: Message[],
-  model: string,
   chatId?: string
 ): Promise<string | null> {
   const groqApiKey = process.env.GROQ_API_KEY
+  // Model is resolved server-side; client-supplied values are not accepted.
+  const model = await resolveGroqModel()
 
   if (!groqApiKey) {
     console.error('GROQ_API_KEY environment variable not set')
@@ -157,10 +197,19 @@ export async function sendChatMessage(
 
   try {
     const groq = new Groq({ apiKey: groqApiKey })
+    const reasoningEffort = await resolveReasoningEffort(model)
 
     const completion = await groq.chat.completions.create({
       messages: fullMessages,
       model,
+      // Only send reasoning params for gpt-oss; other models may reject them.
+      ...(model.startsWith('openai/gpt-oss')
+        ? {
+            // Keep reasoning out of message.content (lands in message.reasoning).
+            include_reasoning: true,
+            ...(reasoningEffort !== undefined ? { reasoning_effort: reasoningEffort } : {}),
+          }
+        : {}),
     })
 
     const responseContent = completion.choices[0]?.message?.content
