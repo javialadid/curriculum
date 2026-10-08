@@ -19,7 +19,6 @@ export function useChatbot({ resume }: UseChatbotProps) {
   const [isHighlighted, setIsHighlighted] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
-  const groqModel = process.env.NEXT_PUBLIC_GROQ_MODELNAME || 'llama-3.3-70b-versatile'
   const maxExchanges = parseInt(process.env.NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES || '20', 10)
   const firstName = resume?.name.split(' ')[0] || 'Assistant'
 
@@ -141,7 +140,7 @@ export function useChatbot({ resume }: UseChatbotProps) {
       const systemMessage = (!chatbotData.prompt || chatbotData.prompt.trim() === '')
         ? `You are a helpful AI assistant that answers questions about the user's professional background based on the following bio and resume data. Be conversational and provide specific, relevant information.\n\nBio: ${chatbotData.bio}${resumeContext}`
         : `${chatbotData.prompt}\n\nBio: ${chatbotData.bio}${resumeContext}`
-      const responseContent = await sendChatMessage(systemMessage, conversationMessages, groqModel)
+      const responseContent = await sendChatMessage(systemMessage, conversationMessages)
 
       const assistantMessage: Message = {
         role: 'assistant',
