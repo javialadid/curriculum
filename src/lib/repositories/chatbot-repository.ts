@@ -30,6 +30,15 @@ const fetchChatbotDataFromDatabase = createCachedDatabaseOperation(
  * Chatbot repository for data access operations
  */
 export class ChatbotRepository {
+  /** Versions for which a missing-row fallback warn has already been emitted. */
+  private fallbackWarnedVersions = new Set<string>()
+
+  private warnFallbackOnce(version: string, message: string): void {
+    if (this.fallbackWarnedVersions.has(version)) return
+    this.fallbackWarnedVersions.add(version)
+    console.warn(message)
+  }
+
   /**
    * Fetches chatbot data for the active content version (with caching).
    * Falls back to the baseline version when the active version has no row.
@@ -40,7 +49,10 @@ export class ChatbotRepository {
       let result = await fetchChatbotDataFromDatabase(version)
 
       if (!result.error && (!result.data || result.data.length === 0) && version !== FALLBACK_CV_VERSION) {
-        console.warn(`No chatbot data for content version ${version}; falling back to ${FALLBACK_CV_VERSION}`)
+        this.warnFallbackOnce(
+          version,
+          `No chatbot data for content version ${version}; falling back to ${FALLBACK_CV_VERSION}`
+        )
         result = await fetchChatbotDataFromDatabase(FALLBACK_CV_VERSION)
       }
 

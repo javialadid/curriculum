@@ -38,9 +38,11 @@ jest.mock('@/lib/supabase', () => {
   return { supabase: { from: (table: string) => makeQuery(table) } }
 })
 
-import { resumeRepository } from '../resume-repository'
-import { chatbotRepository } from '../chatbot-repository'
+import { ResumeRepository, resumeRepository } from '../resume-repository'
+import { ChatbotRepository, chatbotRepository } from '../chatbot-repository'
 import { unstable_cache } from 'next/cache'
+
+type WithFallbackWarnSet = { fallbackWarnedVersions: Set<string> }
 
 const resumeRow = (version: string) => ({
   slug: 'owner',
@@ -60,6 +62,8 @@ beforeEach(() => {
   mockTables.resumes = [resumeRow('v1'), resumeRow('v2')]
   mockTables.chatbot = [chatbotRow('v1'), chatbotRow('v2')]
   delete process.env.CV_VERSION
+  ;(resumeRepository as unknown as WithFallbackWarnSet).fallbackWarnedVersions.clear()
+  ;(chatbotRepository as unknown as WithFallbackWarnSet).fallbackWarnedVersions.clear()
   jest.spyOn(console, 'warn').mockImplementation(() => {})
   jest.spyOn(console, 'error').mockImplementation(() => {})
 })
@@ -98,6 +102,9 @@ describe('resumeRepository', () => {
     expect(error).toBeNull()
     expect(resume?.summary).toBe('summary v1')
     expect(mockQueries.map((q) => q.filters)).toEqual([[['version', 'v2']], [['version', 'v1']]])
+    expect(console.warn).toHaveBeenCalledWith(
+      'No resume for content version v2; falling back to v1'
+    )
   })
 
   it('filters slug lookups by slug and version', async () => {
@@ -113,8 +120,25 @@ describe('resumeRepository', () => {
   it('falls back to v1 for slug lookups and still 404s unknown slugs', async () => {
     process.env.CV_VERSION = 'v3'
     expect((await resumeRepository.getResume({ slug: 'owner' })).resume?.summary).toBe('summary v1')
+    expect(console.warn).toHaveBeenCalledWith(
+      'No resume for content version v3; falling back to v1'
+    )
     const missing = await resumeRepository.getResume({ slug: 'nobody' })
     expect(missing).toEqual({ resume: null, error: 'Resume not found' })
+    // Second fallback for the same version does not warn again
+    expect(console.warn).toHaveBeenCalledTimes(1)
+  })
+
+  it('warns at most once per missing version per instance', async () => {
+    mockTables.resumes = [resumeRow('v1')]
+    const repo = new ResumeRepository()
+    await repo.getResume()
+    await repo.getResume()
+    await repo.getResume({ slug: 'owner' })
+    expect(console.warn).toHaveBeenCalledTimes(1)
+    expect(console.warn).toHaveBeenCalledWith(
+      'No resume for content version v2; falling back to v1'
+    )
   })
 })
 
@@ -130,6 +154,17 @@ describe('chatbotRepository', () => {
   it('falls back to v1 when the requested version has no row', async () => {
     mockTables.chatbot = [chatbotRow('v1')]
     expect((await chatbotRepository.getChatbotData())?.prompt).toBe('prompt v1')
+    expect(console.warn).toHaveBeenCalledWith(
+      'No chatbot data for content version v2; falling back to v1'
+    )
+  })
+
+  it('warns at most once per missing version per instance', async () => {
+    mockTables.chatbot = [chatbotRow('v1')]
+    const repo = new ChatbotRepository()
+    await repo.getChatbotData()
+    await repo.getChatbotData()
+    expect(console.warn).toHaveBeenCalledTimes(1)
   })
 
   it('returns null when no version has data', async () => {

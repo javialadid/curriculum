@@ -1,3 +1,5 @@
+import 'server-only'
+
 /**
  * CV content versioning.
  *

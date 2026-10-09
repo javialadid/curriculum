@@ -40,6 +40,9 @@ function isEmpty(result: DatabaseResult<Resume[]>): boolean {
  * Resume repository for data access operations
  */
 export class ResumeRepository {
+  /** Versions for which a missing-row fallback warn has already been emitted. */
+  private fallbackWarnedVersions = new Set<string>()
+
   /**
    * Fetches resume data with caching for default, direct query for slugs
    */
@@ -58,6 +61,12 @@ export class ResumeRepository {
     }
   }
 
+  private warnFallbackOnce(version: string, message: string): void {
+    if (this.fallbackWarnedVersions.has(version)) return
+    this.fallbackWarnedVersions.add(version)
+    console.warn(message)
+  }
+
   private async queryBySlug(slug: string, version: string): Promise<DatabaseResult<Resume[]>> {
     return databaseClient
       .from<Resume>('resumes')
@@ -73,6 +82,10 @@ export class ResumeRepository {
     let result = await this.queryBySlug(slug, version)
 
     if (isEmpty(result) && version !== FALLBACK_CV_VERSION) {
+      this.warnFallbackOnce(
+        version,
+        `No resume for content version ${version}; falling back to ${FALLBACK_CV_VERSION}`
+      )
       result = await this.queryBySlug(slug, FALLBACK_CV_VERSION)
     }
 
@@ -102,7 +115,10 @@ export class ResumeRepository {
     let result = await fetchDefaultResumeFromDatabase(version)
 
     if (isEmpty(result) && version !== FALLBACK_CV_VERSION) {
-      console.warn(`No resume for content version ${version}; falling back to ${FALLBACK_CV_VERSION}`)
+      this.warnFallbackOnce(
+        version,
+        `No resume for content version ${version}; falling back to ${FALLBACK_CV_VERSION}`
+      )
       result = await fetchDefaultResumeFromDatabase(FALLBACK_CV_VERSION)
     }
 
