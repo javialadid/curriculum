@@ -14,14 +14,21 @@ export interface RateLimiter {
   check(key: string, limit: number, windowSeconds: number): Promise<RateLimitResult>
 }
 
+const MEMORY_EVICT_THRESHOLD = 200
+
 /** In-memory fixed-window counters. Best-effort on serverless (per-instance). */
 export class MemoryRateLimiter implements RateLimiter {
   private readonly windows = new Map<string, { count: number; resetAt: number }>()
 
-  constructor(private readonly now: () => number = () => Date.now()) {}
+  constructor(
+    private readonly now: () => number = () => Date.now(),
+    private readonly evictThreshold = MEMORY_EVICT_THRESHOLD
+  ) {}
 
   async check(key: string, limit: number, windowSeconds: number): Promise<RateLimitResult> {
     const now = this.now()
+    this.evictExpiredIfNeeded(now)
+
     const windowMs = windowSeconds * 1000
     let entry = this.windows.get(key)
 
@@ -39,9 +46,26 @@ export class MemoryRateLimiter implements RateLimiter {
     return { allowed: true }
   }
 
+  /** Sweep expired entries when the map grows past the threshold. */
+  private evictExpiredIfNeeded(now: number): void {
+    if (this.windows.size < this.evictThreshold) {
+      return
+    }
+    for (const [entryKey, entry] of this.windows) {
+      if (now >= entry.resetAt) {
+        this.windows.delete(entryKey)
+      }
+    }
+  }
+
   /** Test helper: clear all counters. */
   clear(): void {
     this.windows.clear()
+  }
+
+  /** Test helper: current map size. */
+  size(): number {
+    return this.windows.size
   }
 
   /** Test helper: inspect a key's state. */
@@ -79,7 +103,7 @@ export class UpstashRateLimiter implements RateLimiter {
 
     if (!response.ok) {
       console.error('Upstash rate limit request failed:', response.status)
-      // Fail open to memory-less path would be wrong; fail closed with short retry.
+      // Fail closed with a short retry rather than skipping limits.
       return { allowed: false, retryAfter: 60 }
     }
 
@@ -128,7 +152,7 @@ export function getRateLimiter(): RateLimiter {
   return sharedLimiter
 }
 
-/** Always-available in-memory limiter for session tracking when Upstash is used for IP only, or tests. */
+/** Always-available in-memory limiter for tests / fallbacks. */
 export function getMemoryRateLimiter(): MemoryRateLimiter {
   if (!memoryFallback) {
     memoryFallback = new MemoryRateLimiter()
@@ -136,6 +160,11 @@ export function getMemoryRateLimiter(): MemoryRateLimiter {
   return memoryFallback
 }
 
+/**
+ * Rate limits:
+ * - per-IP minute and day windows (shared across sessions from that IP)
+ * - separate per-session message cap keyed by IP+sessionId
+ */
 export async function checkChatbotRateLimits(options: {
   ip: string
   sessionId: string
@@ -157,7 +186,7 @@ export async function checkChatbotRateLimits(options: {
     return { ...day, reason: 'day' }
   }
 
-  // Session limit keyed by IP + session so clients cannot reset by minting IDs alone.
+  // Session message cap keyed by IP + session so clients cannot reset by minting IDs alone.
   const session = await limiter.check(`session:${ip}:${sessionId}`, maxExchanges, 86400)
   if (!session.allowed) {
     return { ...session, reason: 'session' }

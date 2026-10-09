@@ -13,6 +13,7 @@ interface UseChatbotProps {
 
 export function useChatbot({ resume }: UseChatbotProps) {
   const [isOpen, setIsOpen] = useState(false)
+  /** Model-bound transcript only (user + successful assistant replies). */
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -20,7 +21,8 @@ export function useChatbot({ resume }: UseChatbotProps) {
   const [isConversationEnded, setIsConversationEnded] = useState(false)
   const [chatId, setChatId] = useState<string | null>(null)
   const [isHighlighted, setIsHighlighted] = useState(false)
-  const [rateLimitMessage, setRateLimitMessage] = useState<string | null>(null)
+  /** UI-only status (rate limits, errors) — never sent to the model. */
+  const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
   const maxExchanges = getClientMaxExchanges()
@@ -85,7 +87,7 @@ export function useChatbot({ resume }: UseChatbotProps) {
     }
 
     if (text.length > maxMessageLength) {
-      setRateLimitMessage(`Message is too long (max ${maxMessageLength} characters).`)
+      setStatusMessage(`Message is too long (max ${maxMessageLength} characters).`)
       return
     }
 
@@ -94,7 +96,7 @@ export function useChatbot({ resume }: UseChatbotProps) {
       return
     }
     setLastMessageTime(now)
-    setRateLimitMessage(null)
+    setStatusMessage(null)
 
     let currentChatId = chatId
     if (!currentChatId) {
@@ -104,50 +106,42 @@ export function useChatbot({ resume }: UseChatbotProps) {
 
     const currentAssistantCount = messages.filter((m) => m.role === 'assistant').length
     if (currentAssistantCount >= maxExchanges) {
-      const closingMessage: Message = {
-        role: 'assistant',
-        content: 'It was nice chatting with you, I have to go now. Talk to you soon!',
-      }
-      setMessages((prev) => [...prev, closingMessage])
+      setStatusMessage(
+        "You've reached the message limit for this chat. Feel free to get in touch directly."
+      )
       setIsConversationEnded(true)
       setTimeout(() => {
         setMessages([])
         setIsConversationEnded(false)
         setChatId(null)
+        setStatusMessage(null)
       }, 5000)
       return
     }
 
     const userMessage: Message = { role: 'user', content: text }
-    const conversationMessages = [...messages, userMessage]
-    setMessages(conversationMessages)
+    // History for the model is prior successful turns only (no status/error text).
+    const historyForModel = messages.map((m) => ({ role: m.role, content: m.content }))
+    setMessages((prev) => [...prev, userMessage])
     setInput('')
     setIsLoading(true)
 
     try {
-      // Send only user/assistant history — never a system prompt or bio.
-      const history = messages.map((m) => ({ role: m.role, content: m.content }))
       const result = await sendChatMessage({
         message: text,
-        history,
+        history: historyForModel,
         sessionId: currentChatId,
       })
 
       if (!result.ok) {
-        if (result.error === 'rate_limited') {
-          setRateLimitMessage(
-            result.message ||
-              'Please slow down and try again later.'
-          )
-          if (result.retryAfter && result.retryAfter > 3600) {
-            setIsConversationEnded(true)
-          }
+        setStatusMessage(result.message)
+        if (result.error === 'rate_limited' && result.retryAfter && result.retryAfter > 3600) {
+          setIsConversationEnded(true)
         }
-        const errorMessage: Message = {
-          role: 'assistant',
-          content: result.message,
-        }
-        setMessages((prev) => [...prev, errorMessage])
+        // Roll back the optimistic user message so it is not resent as orphaned history.
+        setMessages((prev) =>
+          prev.length > 0 && prev[prev.length - 1]?.role === 'user' ? prev.slice(0, -1) : prev
+        )
         return
       }
 
@@ -160,11 +154,10 @@ export function useChatbot({ resume }: UseChatbotProps) {
       sendGAEvent('chatbot_message_sent')
     } catch (error) {
       console.error('Chatbot server action failed:', error)
-      const errorMessage: Message = {
-        role: 'assistant',
-        content: 'Sorry, there was an error processing your message. Please try again.',
-      }
-      setMessages((prev) => [...prev, errorMessage])
+      setStatusMessage('Sorry, there was an error processing your message. Please try again.')
+      setMessages((prev) =>
+        prev.length > 0 && prev[prev.length - 1]?.role === 'user' ? prev.slice(0, -1) : prev
+      )
     } finally {
       setIsLoading(false)
     }
@@ -193,7 +186,7 @@ export function useChatbot({ resume }: UseChatbotProps) {
     firstName,
     isActive,
     maxMessageLength,
-    rateLimitMessage,
+    rateLimitMessage: statusMessage,
     setIsOpen,
     setInput,
     sendMessage,

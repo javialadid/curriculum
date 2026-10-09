@@ -160,11 +160,40 @@ export async function sendChatMessage(
   const limits = getChatbotLimits()
   const headerList = await headers()
 
+  // Validate origin / shape / length before consuming rate-limit quota.
   if (!checkOriginAllowed(headerList)) {
     return {
       ok: false,
       error: 'origin_rejected',
       message: 'Sorry, this request could not be verified. Please refresh and try again.',
+    }
+  }
+
+  const rawMessage = typeof input.message === 'string' ? input.message : ''
+  if (!rawMessage.trim()) {
+    return {
+      ok: false,
+      error: 'invalid',
+      message: 'Sorry, I need a message to respond to.',
+    }
+  }
+
+  if (rawMessage.length > limits.maxMessageLength) {
+    return {
+      ok: false,
+      error: 'message_too_long',
+      message: `Message is too long (max ${limits.maxMessageLength} characters).`,
+    }
+  }
+
+  const historyPreview = sanitizeClientHistory(input.history, limits.maxHistoryMessages)
+  for (const msg of historyPreview) {
+    if (msg.content.length > limits.maxMessageLength) {
+      return {
+        ok: false,
+        error: 'message_too_long',
+        message: `Message is too long (max ${limits.maxMessageLength} characters).`,
+      }
     }
   }
 
@@ -186,26 +215,9 @@ export async function sendChatMessage(
   if (!rate.allowed) {
     const sessionMsg =
       rate.reason === 'session'
-        ? 'This conversation has reached its message limit. Please start a new chat later.'
+        ? "You've reached the message limit for this chat. Feel free to get in touch directly."
         : undefined
     return rateLimitedResult(rate.retryAfter, sessionMsg)
-  }
-
-  const rawMessage = typeof input.message === 'string' ? input.message : ''
-  if (!rawMessage.trim()) {
-    return {
-      ok: false,
-      error: 'invalid',
-      message: 'Sorry, I need a message to respond to.',
-    }
-  }
-
-  if (rawMessage.length > limits.maxMessageLength) {
-    return {
-      ok: false,
-      error: 'message_too_long',
-      message: `Message is too long (max ${limits.maxMessageLength} characters).`,
-    }
   }
 
   const sanitizedUserMessage = await sanitizeMessage(rawMessage)
@@ -217,16 +229,8 @@ export async function sendChatMessage(
     }
   }
 
-  const history = sanitizeClientHistory(input.history, limits.maxHistoryMessages)
   const historySanitized: ClientChatMessage[] = []
-  for (const msg of history) {
-    if (msg.content.length > limits.maxMessageLength) {
-      return {
-        ok: false,
-        error: 'message_too_long',
-        message: `Message is too long (max ${limits.maxMessageLength} characters).`,
-      }
-    }
+  for (const msg of historyPreview) {
     const cleaned = await sanitizeMessage(msg.content)
     if (!cleaned && msg.content) {
       return {

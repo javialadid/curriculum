@@ -339,6 +339,30 @@ describe('sendChatMessage security and caps', () => {
     expect(mockCreate).not.toHaveBeenCalled()
   })
 
+  it('does not consume rate-limit quota for invalid or over-length requests', async () => {
+    process.env.CHATBOT_RATE_LIMIT_PER_MINUTE = '1'
+    const tight = new MemoryRateLimiter()
+    setRateLimiterForTests(tight)
+
+    const rejected = await sendChatMessage({
+      message: 'x'.repeat(401),
+      history: [],
+      sessionId: 'sess-no-quota',
+    })
+    expect(rejected.ok).toBe(false)
+    if (!rejected.ok) {
+      expect(rejected.error).toBe('message_too_long')
+    }
+
+    const allowed = await sendChatMessage({
+      message: 'Valid after rejection',
+      history: [],
+      sessionId: 'sess-no-quota',
+    })
+    expect(allowed.ok).toBe(true)
+    expect(mockCreate).toHaveBeenCalledTimes(1)
+  })
+
   it('passes max_tokens to Groq', async () => {
     process.env.CHATBOT_MAX_OUTPUT_TOKENS = '250'
     // Re-importing limits via env — getChatbotLimits reads env at call time

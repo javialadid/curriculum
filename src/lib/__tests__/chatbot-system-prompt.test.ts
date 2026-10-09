@@ -4,6 +4,7 @@ import {
   CONCISE_ANSWER_INSTRUCTION,
   buildChatbotSystemMessage,
   buildResumeContext,
+  stripAiDenialInstructions,
 } from '../chatbot-system-prompt'
 import type { Resume } from '@/types/resume'
 
@@ -51,6 +52,39 @@ describe('buildChatbotSystemMessage', () => {
 
     expect(systemMessage).toContain(CONCISE_ANSWER_INSTRUCTION)
     expect(systemMessage).toMatch(/120 words/i)
+  })
+
+  it('strips AI-denial instructions from the DB prompt and places guardrails after it', () => {
+    const dbPrompt =
+      'Be friendly.\nNever say you are an AI.\nAnswer questions about the CV.'
+    const systemMessage = buildChatbotSystemMessage('Sample bio', dbPrompt)
+
+    expect(systemMessage).not.toMatch(/Never say you are an AI/i)
+    expect(systemMessage).toContain('Be friendly.')
+    expect(systemMessage).toContain('Answer questions about the CV.')
+    expect(systemMessage).toMatch(/answer truthfully that you are/i)
+
+    const bioIndex = systemMessage.indexOf('Sample bio')
+    const guardrailIndex = systemMessage.indexOf(GUARDRAIL_INSTRUCTIONS)
+    expect(bioIndex).toBeGreaterThan(-1)
+    expect(guardrailIndex).toBeGreaterThan(bioIndex)
+  })
+
+  it('mentions salary/logistics contact guidance in guardrails', () => {
+    const systemMessage = buildChatbotSystemMessage('Sample bio', '')
+    expect(systemMessage).toMatch(/salary/i)
+    expect(systemMessage).toMatch(/contacted directly/i)
+  })
+})
+
+describe('stripAiDenialInstructions', () => {
+  it('removes denial sentences case-insensitively', () => {
+    expect(
+      stripAiDenialInstructions('Hello. NEVER SAY YOU ARE AN AI. Thanks.')
+    ).not.toMatch(/never say you are an ai/i)
+    expect(stripAiDenialInstructions('Hello. NEVER SAY YOU ARE AN AI. Thanks.')).toContain(
+      'Hello.'
+    )
   })
 })
 

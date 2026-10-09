@@ -5,12 +5,13 @@ import type { ClientChatMessage } from '@/lib/chatbot-actions-types'
  * Cheap belt-and-suspenders origin check. Next.js server actions already
  * validate Origin against the host; this rejects obviously mismatched Origin
  * headers when both Origin and Host/x-forwarded-host are present.
+ *
+ * Missing Origin is allowed: non-browser clients often omit it. Those callers
+ * are still covered by per-IP rate limits and session caps.
  */
 export function checkOriginAllowed(headerList: Headers): boolean {
   const origin = headerList.get('origin')
   if (!origin) {
-    // Same-origin navigations and some non-browser callers omit Origin.
-    // Next's built-in server-action CSRF check still applies for browsers.
     return true
   }
 
@@ -32,6 +33,11 @@ export function checkOriginAllowed(headerList: Headers): boolean {
   return originHost.toLowerCase() === host.toLowerCase()
 }
 
+/**
+ * Resolve client IP for rate limiting.
+ * On Vercel, `x-forwarded-for` is set by the platform (do not invent a custom
+ * trusted-proxy layer here).
+ */
 export function getClientIp(headerList: Headers): string {
   const forwarded = headerList.get('x-forwarded-for')
   if (forwarded) {
