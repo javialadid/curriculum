@@ -292,7 +292,7 @@ export async function sendChatMessage(
   ]
 
   try {
-    const groq = new Groq({ apiKey: groqApiKey })
+    const groq = new Groq({ apiKey: groqApiKey, maxRetries: 1 })
     const reasoningEffort = await resolveReasoningEffort(model)
 
     const completion = await groq.chat.completions.create({

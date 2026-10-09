@@ -40,6 +40,7 @@ jest.mock('../supabase', () => ({
 }))
 
 import { headers } from 'next/headers'
+import Groq from 'groq-sdk'
 import {
   sanitizeMessage,
   sendChatMessage,
@@ -409,6 +410,8 @@ describe('sendChatMessage security and caps', () => {
   it('truncates assistant history at a word boundary and respects the env cap', async () => {
     expect(truncateAtWordBoundary('one two three four five', 12)).toBe('one two')
     expect(truncateAtWordBoundary('abcdefghij', 5)).toBe('abcde')
+    expect(truncateAtWordBoundary('one\ttwo\nthree four', 10)).toBe('one\ttwo')
+    expect(truncateAtWordBoundary('alpha\nbeta gamma', 12)).toBe('alpha\nbeta')
 
     process.env.CHATBOT_MAX_ASSISTANT_HISTORY_CHARS = '20'
     const longAssistant = 'alpha beta gamma delta epsilon zeta'
@@ -471,6 +474,18 @@ describe('sendChatMessage security and caps', () => {
 
     expect(mockCreate).toHaveBeenCalledTimes(1)
     expect(mockCreate.mock.calls[0][0].max_tokens).toBe(250)
+  })
+
+  it('constructs the Groq client with maxRetries: 1', async () => {
+    ;(Groq as unknown as jest.Mock).mockClear()
+    await sendChatMessage({
+      message: 'Hello',
+      history: [],
+      sessionId: 'sess-max-retries',
+    })
+    expect(Groq).toHaveBeenCalledWith(
+      expect.objectContaining({ apiKey: 'test-key', maxRetries: 1 })
+    )
   })
 
   it('returns rate_limited when the per-minute limit is exceeded', async () => {

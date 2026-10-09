@@ -39,34 +39,65 @@ describe('buildChatbotSystemMessage', () => {
     expect(systemMessage).toContain(SKILLS_GROUNDING_INSTRUCTION)
   })
 
-  it('includes AI disclosure and neutral-employer guardrails', () => {
+  it('includes AI disclosure and exit-reason guardrails', () => {
     const systemMessage = buildChatbotSystemMessage('Sample bio', 'Custom prompt')
 
     expect(systemMessage).toContain(GUARDRAIL_INSTRUCTIONS)
     expect(systemMessage).toMatch(/answer truthfully that you are/i)
     expect(systemMessage).not.toMatch(/Never say you are an AI/i)
-    expect(systemMessage).toMatch(/briefly and neutrally/i)
+    expect(systemMessage).toMatch(/use only wording stated in the provided data for that specific role/i)
+    expect(systemMessage).toMatch(/never borrow a reason from another role/i)
+    expect(systemMessage).toMatch(/Never describe a role marked current as ended/i)
+    expect(systemMessage).toMatch(
+      /Never mention funding problems, unpaid pay, broken promises, conflicts, or blame/i
+    )
   })
 
-  it('places the neutral-exit instruction after the DB prompt', () => {
+  it('places the exit-reason instruction after the DB prompt and bio', () => {
     const dbPrompt = 'Be friendly. Answer questions about the CV.'
-    const systemMessage = buildChatbotSystemMessage('Sample bio', dbPrompt)
+    const bio = 'Sample bio for ordering checks'
+    const systemMessage = buildChatbotSystemMessage(bio, dbPrompt)
 
     expect(systemMessage).toContain(NEUTRAL_EXIT_INSTRUCTION)
-    expect(systemMessage).toMatch(/looking for a new challenge/i)
+    expect(systemMessage).toMatch(/role concluded or he moved on/i)
     expect(systemMessage).toMatch(/overrides any conflicting detail/i)
 
     const dbIndex = systemMessage.indexOf(dbPrompt)
+    const bioIndex = systemMessage.indexOf(bio)
     const exitIndex = systemMessage.indexOf(NEUTRAL_EXIT_INSTRUCTION)
     expect(dbIndex).toBeGreaterThan(-1)
-    expect(exitIndex).toBeGreaterThan(dbIndex)
+    expect(bioIndex).toBeGreaterThan(dbIndex)
+    expect(exitIndex).toBeGreaterThan(bioIndex)
   })
 
-  it('asks for third-person persona and no tables', () => {
+  it('places exit and third-person instructions after the resume data', () => {
+    const resumeMarker = 'Full Resume Data:\n{"skills":{"languages":["TypeScript"]}}'
+    const resumeContext = `\n\n${resumeMarker}`
+    const systemMessage = buildChatbotSystemMessage(
+      'Sample bio',
+      'Custom prompt',
+      resumeContext
+    )
+
+    const resumeIndex = systemMessage.indexOf(resumeMarker)
+    const exitIndex = systemMessage.indexOf(NEUTRAL_EXIT_INSTRUCTION)
+    const thirdPersonIndex = systemMessage.indexOf(
+      'Refer to the owner in the third person'
+    )
+
+    expect(resumeIndex).toBeGreaterThan(-1)
+    expect(exitIndex).toBeGreaterThan(resumeIndex)
+    expect(thirdPersonIndex).toBeGreaterThan(resumeIndex)
+  })
+
+  it('asks for third-person persona with override wording and no tables', () => {
     const systemMessage = buildChatbotSystemMessage('Sample bio', '')
 
     expect(systemMessage).toMatch(/third person/i)
     expect(systemMessage).toMatch(/Never speak in the first person as the owner/i)
+    expect(systemMessage).toMatch(
+      /This overrides any persona or first-person instruction above/i
+    )
     expect(systemMessage).toContain(CONCISE_ANSWER_INSTRUCTION)
     expect(systemMessage).toMatch(/Don'?t use tables/i)
   })

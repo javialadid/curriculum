@@ -14,35 +14,55 @@ export const DEFAULT_MAX_EXCHANGES = 15
 export const DEFAULT_RATE_LIMIT_PER_MINUTE = 5
 export const DEFAULT_RATE_LIMIT_PER_DAY = 30
 
-/** Truncate at the last whitespace within maxChars; hard-cut if no space found. */
+/** Truncate at the last whitespace within maxChars; hard-cut if no whitespace found. */
 export function truncateAtWordBoundary(text: string, maxChars: number): string {
   if (text.length <= maxChars) {
     return text
   }
   const sliced = text.slice(0, maxChars)
-  const lastSpace = sliced.lastIndexOf(' ')
-  if (lastSpace > 0) {
-    return sliced.slice(0, lastSpace).trimEnd()
+  let lastWs = -1
+  for (let i = sliced.length - 1; i >= 0; i--) {
+    if (/\s/.test(sliced[i]!)) {
+      lastWs = i
+      break
+    }
+  }
+  if (lastWs > 0) {
+    return sliced.slice(0, lastWs).trimEnd()
   }
   return sliced
 }
 
+/**
+ * Parse a plain positive integer env value. Rejects scientific notation,
+ * trailing junk, floats, zero, and negatives (same rules as server config).
+ */
+export function parsePositiveInt(raw: string | undefined, fallback: number): number {
+  if (raw === undefined || raw === '') {
+    return fallback
+  }
+  const parsed = Number(raw)
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return fallback
+  }
+  if (!/^\d+$/.test(raw.trim())) {
+    return fallback
+  }
+  return parsed
+}
+
 /** Client-visible max message length (mirrors server default). */
 export function getClientMaxMessageLength(): number {
-  const raw = process.env.NEXT_PUBLIC_CHATBOT_MAX_MESSAGE_LENGTH
-  if (raw === undefined || raw === '') {
-    return DEFAULT_MAX_MESSAGE_LENGTH
-  }
-  const parsed = parseInt(raw, 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MAX_MESSAGE_LENGTH
+  return parsePositiveInt(
+    process.env.NEXT_PUBLIC_CHATBOT_MAX_MESSAGE_LENGTH,
+    DEFAULT_MAX_MESSAGE_LENGTH
+  )
 }
 
 /** Client-visible max exchanges hint (server still enforces). */
 export function getClientMaxExchanges(): number {
-  const raw = process.env.NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES
-  if (raw === undefined || raw === '') {
-    return DEFAULT_MAX_EXCHANGES
-  }
-  const parsed = parseInt(raw, 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MAX_EXCHANGES
+  return parsePositiveInt(
+    process.env.NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES,
+    DEFAULT_MAX_EXCHANGES
+  )
 }

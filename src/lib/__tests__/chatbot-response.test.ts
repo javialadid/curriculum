@@ -61,6 +61,16 @@ describe('finalizeAssistantContent', () => {
       )
     ).toBe('Skills include React, Node, etc. (reply shortened)')
   })
+
+  it('treats etc. followed by a newline as a sentence end', () => {
+    const withNewline = 'Skills include React, Node, etc.\nThey also worked on testi'
+    expect(findLastSentenceEnd(withNewline)).toBe(
+      'Skills include React, Node, etc.'.length - 1
+    )
+    expect(finalizeAssistantContent(withNewline, 'length')).toBe(
+      'Skills include React, Node, etc. (reply shortened)'
+    )
+  })
 })
 
 describe('extractAssistantText', () => {

@@ -115,9 +115,10 @@ body {
     color: hsl(var(--foreground)) !important;
     background: #fff !important;
     font-family: var(--font-geist-print), var(--font-geist-sans), Arial, sans-serif !important;
-    font-size: 9.5pt !important;
+    /* ~0.5pt tighter than prior 9.5pt so v2 length fits 2 A4 pages */
+    font-size: 9pt !important;
     font-weight: 400 !important;
-    line-height: 1.35 !important;
+    line-height: 1.28 !important;
     letter-spacing: 0 !important;
     font-variant-ligatures: none;
     font-feature-settings: "liga" 0, "clig" 0;
@@ -188,9 +189,9 @@ body {
   }
 
   .print-contact {
-    margin-top: 4pt !important;
-    margin-bottom: 6pt !important;
-    padding-bottom: 6pt !important;
+    margin-top: 3pt !important;
+    margin-bottom: 4pt !important;
+    padding-bottom: 4pt !important;
     border-bottom: 1.5pt solid hsl(var(--blue)) !important;
   }
 
@@ -200,31 +201,31 @@ body {
     font-weight: 700 !important;
     line-height: 1.2 !important;
     color: hsl(var(--blue)) !important;
-    margin: 0 0 4pt 0 !important;
+    margin: 0 0 3pt 0 !important;
     padding: 0 !important;
     border: none !important;
   }
 
   .print-contact-line {
     font-size: 9pt !important;
-    line-height: 1.3 !important;
-    margin: 0 0 6pt 0 !important;
+    line-height: 1.25 !important;
+    margin: 0 0 4pt 0 !important;
     color: hsl(var(--foreground)) !important;
   }
 
   section {
-    margin-bottom: 8pt !important;
+    margin-bottom: 4pt !important;
   }
 
   /* Any section heading, including those wrapped for print keep-together */
   section h2 {
     font-size: 11.5pt !important;
     font-weight: 700 !important;
-    line-height: 1.2 !important;
+    line-height: 1.15 !important;
     color: hsl(var(--blue)) !important;
-    margin-top: 10pt !important;
-    margin-bottom: 4pt !important;
-    padding-bottom: 2pt !important;
+    margin-top: 6pt !important;
+    margin-bottom: 2pt !important;
+    padding-bottom: 1.5pt !important;
     border-bottom: 0.5pt solid hsl(var(--border)) !important;
     break-after: avoid;
     page-break-after: avoid;
@@ -254,8 +255,8 @@ body {
 
   .print-compact-exp p,
   article > p {
-    font-size: 9.5pt !important;
-    line-height: 1.3 !important;
+    font-size: 9pt !important;
+    line-height: 1.25 !important;
   }
 
   /* Company / meta under job titles — stronger than body, not education institutions */
@@ -281,19 +282,19 @@ body {
   }
 
   .print-compact-exp {
-    margin-bottom: 6pt !important;
+    margin-bottom: 3pt !important;
   }
 
   .print-compact-exp ul,
   article ul {
-    margin-top: 2pt !important;
+    margin-top: 1pt !important;
   }
 
   .print-compact-exp li,
   section li {
-    font-size: 9.5pt !important;
-    line-height: 1.35 !important;
-    margin-bottom: 2pt !important;
+    font-size: 9pt !important;
+    line-height: 1.25 !important;
+    margin-bottom: 1pt !important;
     break-inside: avoid;
     page-break-inside: avoid;
     orphans: 2;
@@ -325,9 +326,14 @@ body {
   }
 
   .prose p {
+    margin-bottom: 1pt !important;
+    line-height: 1.25 !important;
+    font-size: 9pt !important;
+  }
+
+  /* Education entries: keep compact so the block stays on page 2 */
+  section[aria-labelledby="education-heading"] article {
     margin-bottom: 2pt !important;
-    line-height: 1.35 !important;
-    font-size: 9.5pt !important;
   }
 
   .text-foreground {
