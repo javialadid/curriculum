@@ -8,11 +8,9 @@ interface MessageInputProps {
   isLoading: boolean
   isDisabled: boolean
   isConversationEnded: boolean
+  maxMessageLength: number
   inputRef?: React.RefObject<HTMLInputElement | null>
 }
-
-// Security: Message length limits
-const MAX_MESSAGE_LENGTH = 500
 
 export function MessageInput({
   input,
@@ -22,10 +20,12 @@ export function MessageInput({
   isLoading,
   isDisabled,
   isConversationEnded,
-  inputRef
+  maxMessageLength,
+  inputRef,
 }: MessageInputProps) {
-  const isInputTooLong = input.length > MAX_MESSAGE_LENGTH
-  const isSendDisabled = isLoading || !input.trim() || isDisabled || isConversationEnded || isInputTooLong
+  const isInputTooLong = input.length > maxMessageLength
+  const isSendDisabled =
+    isLoading || !input.trim() || isDisabled || isConversationEnded || isInputTooLong
 
   return (
     <div className="p-2 sm:p-4 border-t border-gray-200 dark:border-gray-700">
@@ -35,21 +35,24 @@ export function MessageInput({
           type="text"
           value={input}
           onChange={(e) => {
-            // Security: Limit message length to prevent abuse
             const value = e.target.value
-            if (value.length <= MAX_MESSAGE_LENGTH) {
+            if (value.length <= maxMessageLength) {
               onInputChange(value)
             }
           }}
           onKeyPress={onKeyPress}
-          placeholder={isConversationEnded ? "Conversation ended. Starting new session..." : "Type your message..."}
+          placeholder={
+            isConversationEnded
+              ? 'Conversation ended. Starting new session...'
+              : 'Type your message...'
+          }
           className={`flex-1 px-2 sm:px-3 py-2 border rounded-md focus:outline-none focus:ring-2 dark:bg-gray-700 dark:text-white ${
             isInputTooLong
               ? 'border-red-500 focus:ring-red-500'
               : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
           }`}
           disabled={isLoading || isDisabled || isConversationEnded}
-          maxLength={MAX_MESSAGE_LENGTH}
+          maxLength={maxMessageLength}
         />
         <button
           onClick={onSendMessage}
@@ -59,6 +62,9 @@ export function MessageInput({
           <Send className="w-4 h-4 sm:hidden" />
           <span className="hidden sm:inline">Send</span>
         </button>
+      </div>
+      <div className="mt-1 text-right text-xs text-gray-500 dark:text-gray-400">
+        {input.length}/{maxMessageLength}
       </div>
     </div>
   )

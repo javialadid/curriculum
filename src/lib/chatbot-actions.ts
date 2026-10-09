@@ -1,25 +1,55 @@
 'use server'
 
-import { chatbotRepository } from '@/lib/repositories'
+import { headers } from 'next/headers'
 import Groq from 'groq-sdk'
+import { chatbotRepository, resumeRepository } from '@/lib/repositories'
+import { getChatbotLimits } from '@/lib/chatbot-config'
+import { checkChatbotRateLimits, getRateLimiter } from '@/lib/chatbot-rate-limit'
+import {
+  buildChatbotSystemMessage,
+  buildResumeContext,
+} from '@/lib/chatbot-system-prompt'
+import {
+  checkOriginAllowed,
+  getClientIp,
+  sanitizeClientHistory,
+} from '@/lib/chatbot-request'
+import type {
+  ClientChatMessage,
+  SendChatMessageInput,
+  SendChatResult,
+} from '@/lib/chatbot-actions-types'
 
-export interface ChatbotData {
-  bio: string
-  prompt: string
+export type {
+  ClientChatMessage,
+  ClientChatRole,
+  SendChatErrorCode,
+  SendChatMessageInput,
+  SendChatResult,
+} from '@/lib/chatbot-actions-types'
+
+const DEFAULT_GROQ_MODEL = 'openai/gpt-oss-20b'
+const VALID_REASONING_EFFORTS = new Set(['low', 'medium', 'high'])
+
+function rateLimitedResult(retryAfter?: number, message?: string): SendChatResult {
+  return {
+    ok: false,
+    error: 'rate_limited',
+    retryAfter,
+    message:
+      message ||
+      'You are sending messages too quickly. Please slow down and try again in a moment.',
+  }
 }
 
-export interface Message {
-  role: 'user' | 'assistant' | 'system'
-  content: string
+/** Lightweight readiness check — never returns bio or prompt text. */
+export async function isChatbotAvailable(): Promise<boolean> {
+  if (!process.env.GROQ_API_KEY) {
+    return false
+  }
+  const data = await chatbotRepository.getChatbotData()
+  return data !== null
 }
-
-export async function fetchChatbotData(): Promise<ChatbotData | null> {
-  return chatbotRepository.getChatbotData()
-}
-
-// Security constants - configurable via env
-const MAX_MESSAGE_LENGTH = parseInt(process.env.CHATBOT_MAX_MESSAGE_LENGTH || '1000', 10)
-const MAX_CONVERSATION_LENGTH = parseInt(process.env.CHATBOT_MAX_CONVERSATION_LENGTH || '10000', 10)
 
 // Exported for testing
 export async function sanitizeMessage(content: string): Promise<string> {
@@ -27,25 +57,22 @@ export async function sanitizeMessage(content: string): Promise<string> {
     return ''
   }
 
-  // Security: Aggressive sanitization for malicious content
   let sanitizedContent = content
 
-  // Remove HTML tags completely (including content between tags for script/style)
-  sanitizedContent = sanitizedContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-  sanitizedContent = sanitizedContent.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-  sanitizedContent = sanitizedContent.replace(/<[^>]*>/g, '') // Remove remaining HTML tags
-
-  // Remove javascript: URLs completely
+  sanitizedContent = sanitizedContent.replace(
+    /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+    ''
+  )
+  sanitizedContent = sanitizedContent.replace(
+    /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi,
+    ''
+  )
+  sanitizedContent = sanitizedContent.replace(/<[^>]*>/g, '')
   sanitizedContent = sanitizedContent.replace(/javascript:[^)]*\)/gi, '')
-
-  // Remove event handlers completely
   sanitizedContent = sanitizedContent.replace(/on\w+=[^)]*\)/gi, '')
 
   return sanitizedContent.trim()
 }
-
-const DEFAULT_GROQ_MODEL = 'openai/gpt-oss-20b'
-const VALID_REASONING_EFFORTS = new Set(['low', 'medium', 'high'])
 
 /** Resolve model from env; client-supplied values are ignored. Exported for tests. */
 export async function resolveGroqModel(): Promise<string> {
@@ -58,18 +85,18 @@ export async function resolveGroqModel(): Promise<string> {
  * (non-gpt-oss, or GROQ_REASONING_EFFORT set to none/empty).
  * Invalid values fall back to medium. Exported for tests.
  */
-export async function resolveReasoningEffort(model: string): Promise<'low' | 'medium' | 'high' | undefined> {
+export async function resolveReasoningEffort(
+  model: string
+): Promise<'low' | 'medium' | 'high' | undefined> {
   if (!model.startsWith('openai/gpt-oss')) {
     return undefined
   }
 
   const raw = process.env.GROQ_REASONING_EFFORT
-  // Explicit none or empty string: omit the parameter entirely.
   if (raw !== undefined && (raw.trim() === '' || raw.trim().toLowerCase() === 'none')) {
     return undefined
   }
 
-  // Unset: default to medium.
   if (raw === undefined) {
     return 'medium'
   }
@@ -79,120 +106,174 @@ export async function resolveReasoningEffort(model: string): Promise<'low' | 'me
     return normalized as 'low' | 'medium' | 'high'
   }
 
-  // Invalid values fall back to medium.
   return 'medium'
 }
 
-export async function sendChatMessage(
+function truncateByConversationLength(
   systemMessage: string,
-  messages: Message[],
-  chatId?: string
-): Promise<string | null> {
-  const groqApiKey = process.env.GROQ_API_KEY
-  // Model is resolved server-side; client-supplied values are not accepted.
-  const model = await resolveGroqModel()
+  messages: ClientChatMessage[],
+  maxLength: number
+): ClientChatMessage[] {
+  const total =
+    systemMessage.length + messages.reduce((sum, msg) => sum + (msg.content?.length || 0), 0)
 
+  if (total <= maxLength) {
+    return messages
+  }
+
+  let currentLength = systemMessage.length
+  const kept: ClientChatMessage[] = []
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i]
+    const msgLength = msg.content?.length || 0
+    if (currentLength + msgLength <= maxLength) {
+      kept.unshift(msg)
+      currentLength += msgLength
+    } else {
+      break
+    }
+  }
+
+  if (kept.length === 0 || kept[kept.length - 1].role !== 'user') {
+    const lastUser = [...messages].reverse().find((msg) => msg.role === 'user')
+    if (lastUser && !kept.includes(lastUser)) {
+      kept.push(lastUser)
+    }
+  }
+
+  return kept
+}
+
+/**
+ * Send a chat message. The client may only supply the new user message,
+ * a short user/assistant history, and a session id. System prompts and
+ * bio/CV data are loaded and assembled exclusively on the server.
+ */
+export async function sendChatMessage(
+  input: SendChatMessageInput
+): Promise<SendChatResult> {
+  const limits = getChatbotLimits()
+  const headerList = await headers()
+
+  if (!checkOriginAllowed(headerList)) {
+    return {
+      ok: false,
+      error: 'origin_rejected',
+      message: 'Sorry, this request could not be verified. Please refresh and try again.',
+    }
+  }
+
+  const ip = getClientIp(headerList)
+  const sessionId =
+    typeof input.sessionId === 'string' && input.sessionId.trim().length > 0
+      ? input.sessionId.trim().slice(0, 128)
+      : 'anonymous'
+
+  const rate = await checkChatbotRateLimits({
+    ip,
+    sessionId,
+    perMinute: limits.rateLimitPerMinute,
+    perDay: limits.rateLimitPerDay,
+    maxExchanges: limits.maxExchanges,
+    limiter: getRateLimiter(),
+  })
+
+  if (!rate.allowed) {
+    const sessionMsg =
+      rate.reason === 'session'
+        ? 'This conversation has reached its message limit. Please start a new chat later.'
+        : undefined
+    return rateLimitedResult(rate.retryAfter, sessionMsg)
+  }
+
+  const rawMessage = typeof input.message === 'string' ? input.message : ''
+  if (!rawMessage.trim()) {
+    return {
+      ok: false,
+      error: 'invalid',
+      message: 'Sorry, I need a message to respond to.',
+    }
+  }
+
+  if (rawMessage.length > limits.maxMessageLength) {
+    return {
+      ok: false,
+      error: 'message_too_long',
+      message: `Message is too long (max ${limits.maxMessageLength} characters).`,
+    }
+  }
+
+  const sanitizedUserMessage = await sanitizeMessage(rawMessage)
+  if (!sanitizedUserMessage) {
+    return {
+      ok: false,
+      error: 'invalid',
+      message: 'Sorry, there was an issue with your message. Please try again.',
+    }
+  }
+
+  const history = sanitizeClientHistory(input.history, limits.maxHistoryMessages)
+  const historySanitized: ClientChatMessage[] = []
+  for (const msg of history) {
+    if (msg.content.length > limits.maxMessageLength) {
+      return {
+        ok: false,
+        error: 'message_too_long',
+        message: `Message is too long (max ${limits.maxMessageLength} characters).`,
+      }
+    }
+    const cleaned = await sanitizeMessage(msg.content)
+    if (!cleaned && msg.content) {
+      return {
+        ok: false,
+        error: 'invalid',
+        message: 'Sorry, there was an issue with your message. Please try again.',
+      }
+    }
+    if (cleaned) {
+      historySanitized.push({ role: msg.role, content: cleaned })
+    }
+  }
+
+  const chatbotData = await chatbotRepository.getChatbotData()
+  if (!chatbotData) {
+    return {
+      ok: false,
+      error: 'unavailable',
+      message: 'Sorry, the assistant is temporarily unavailable. Please try again later.',
+    }
+  }
+
+  const { resume } = await resumeRepository.getResume()
+  const resumeContext = buildResumeContext(resume)
+  // Client-supplied systemMessage / prompt / system fields are intentionally ignored.
+  const systemMessage = buildChatbotSystemMessage(
+    chatbotData.bio,
+    chatbotData.prompt,
+    resumeContext
+  )
+
+  const conversation = truncateByConversationLength(
+    systemMessage,
+    [...historySanitized, { role: 'user', content: sanitizedUserMessage }],
+    limits.maxConversationLength
+  )
+
+  const groqApiKey = process.env.GROQ_API_KEY
   if (!groqApiKey) {
     console.error('GROQ_API_KEY environment variable not set')
-    return null
-  }
-
-  // Security: Validate and sanitize inputs
-  if (!messages || messages.length === 0) {
-    console.error('No messages provided')
-    return 'Sorry, I need a message to respond to.'
-  }
-
-  // Truncate conversation if it exceeds total length limit
-  let truncatedMessages = messages
-  const totalConversationLength = systemMessage.length + messages.reduce((total, msg) => total + (msg.content?.length || 0), 0)
-
-    if (totalConversationLength > MAX_CONVERSATION_LENGTH) {
-      console.log(`Truncating conversation from ${messages.length} messages`)
-
-      // Calculate how much we need to remove
-      let currentLength = systemMessage.length
-      const messagesToKeep: Message[] = []
-
-      // Start from the end (most recent messages) and work backwards
-      for (let i = messages.length - 1; i >= 0; i--) {
-        const msg = messages[i]
-        const msgLength = msg.content?.length || 0
-
-        if (currentLength + msgLength <= MAX_CONVERSATION_LENGTH) {
-          messagesToKeep.unshift(msg) // Add to beginning to maintain order
-          currentLength += msgLength
-        } else {
-          break // Stop when we can't add more messages
-        }
-      }
-
-      // Ensure we keep at least the most recent user message
-      if (messagesToKeep.length === 0 || messagesToKeep[messagesToKeep.length - 1].role !== 'user') {
-        // If no user message in kept messages, keep at least the last user message
-        const lastUserMessage = messages.slice().reverse().find(msg => msg.role === 'user')
-        if (lastUserMessage && !messagesToKeep.includes(lastUserMessage)) {
-          messagesToKeep.push(lastUserMessage)
-        }
-      }
-
-      truncatedMessages = messagesToKeep
-    }
-
-  // Security: Validate and sanitize each message
-  const validationResults = await Promise.all(truncatedMessages.map(async (msg, index) => {
-    const validationErrors: string[] = []
-
-    if (!msg.content || typeof msg.content !== 'string') {
-      validationErrors.push('Invalid message format (missing or non-string content)')
-    }
-
-    // Security: Check message length
-    if (msg.content && msg.content.length > MAX_MESSAGE_LENGTH) {
-      validationErrors.push(`Message too long (${msg.content.length} > ${MAX_MESSAGE_LENGTH} characters)`)
-    }
-
-    // Security: Basic HTML/script tag removal
-    const sanitizedContent = await sanitizeMessage(msg.content || '')
-
-    if (!sanitizedContent && msg.content) {
-      validationErrors.push('Message empty after sanitization (likely contained only malicious content)')
-    }
-
     return {
-      index,
-      originalMessage: {
-        role: msg.role,
-        contentLength: msg.content?.length || 0,
-        contentPreview: msg.content ? msg.content.substring(0, 50) + (msg.content.length > 50 ? '...' : '') : ''
-      },
-      validationErrors,
-      sanitizedMessage: validationErrors.length === 0 ? {
-        role: msg.role,
-        content: sanitizedContent
-      } : null
+      ok: false,
+      error: 'unavailable',
+      message: 'Sorry, the assistant is temporarily unavailable. Please try again later.',
     }
-  }))
-
-  const failedValidations = validationResults.filter(result => result.validationErrors.length > 0)
-  const sanitizedMessages = validationResults
-    .filter(result => result.sanitizedMessage !== null)
-    .map(result => result.sanitizedMessage!) as Message[]
-
-  if (failedValidations.length > 0) {
-    console.error(`Message validation failed for ${failedValidations.length} out of ${truncatedMessages.length} messages`)
-    return 'Sorry, there was an issue with your message. Please try again.'
   }
 
-  // Security: Validate system message (allow larger size for resume context)
-  if (!systemMessage || typeof systemMessage !== 'string' || systemMessage.length > 50000) {
-    console.error('Invalid system message')
-    return 'Sorry, there was a configuration error. Please try again later.'
-  }
-
+  const model = await resolveGroqModel()
   const fullMessages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
     { role: 'system', content: systemMessage },
-    ...sanitizedMessages
+    ...conversation,
   ]
 
   try {
@@ -202,10 +283,9 @@ export async function sendChatMessage(
     const completion = await groq.chat.completions.create({
       messages: fullMessages,
       model,
-      // Only send reasoning params for gpt-oss; other models may reject them.
+      max_tokens: limits.maxOutputTokens,
       ...(model.startsWith('openai/gpt-oss')
         ? {
-            // Keep reasoning out of message.content (lands in message.reasoning).
             include_reasoning: true,
             ...(reasoningEffort !== undefined ? { reasoning_effort: reasoningEffort } : {}),
           }
@@ -216,12 +296,20 @@ export async function sendChatMessage(
 
     if (!responseContent) {
       console.error('GROQ API returned empty response')
-      return 'Sorry, I couldn\'t generate a response.'
+      return {
+        ok: false,
+        error: 'unavailable',
+        message: "Sorry, I couldn't generate a response.",
+      }
     }
 
-    return responseContent
+    return { ok: true, content: responseContent }
   } catch (error) {
     console.error('Error calling GROQ API:', error)
-    return 'Sorry, there was an error processing your message. Please try again.'
+    return {
+      ok: false,
+      error: 'unavailable',
+      message: 'Sorry, there was an error processing your message. Please try again.',
+    }
   }
 }

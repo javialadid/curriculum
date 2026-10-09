@@ -3,6 +3,9 @@ import '@testing-library/jest-dom'
 // Mock fetch for groq-sdk
 global.fetch = jest.fn()
 
+// server-only throws outside the Next server runtime
+jest.mock('server-only', () => ({}))
+
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
   useRouter() {
@@ -21,6 +24,20 @@ jest.mock('next/navigation', () => ({
 jest.mock('next/cache', () => ({
   unstable_cache: jest.fn((fn) => fn),
   unstable_noStore: jest.fn(),
+}))
+
+// Mock Next.js headers (server actions)
+jest.mock('next/headers', () => ({
+  headers: jest.fn(async () => {
+    const map = new Map([
+      ['host', 'localhost:3000'],
+      ['origin', 'http://localhost:3000'],
+      ['x-forwarded-for', '127.0.0.1'],
+    ])
+    return {
+      get: (key) => map.get(key.toLowerCase()) ?? null,
+    }
+  }),
 }))
 
 // Mock environment variables

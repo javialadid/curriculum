@@ -3,11 +3,6 @@ export interface Message {
   content: string
 }
 
-export interface ChatbotData {
-  bio: string
-  prompt: string
-}
-
 export interface ExperienceItem {
   company: string
   location: string
@@ -45,6 +40,10 @@ export interface Resume {
   photo?: string
   tag_line?: string
   current_location?: string
+  open_to_remote?: boolean | null
+  open_to_relocation?: boolean | null
+  availability?: string | null
+  languages?: string[] | null
   created_at: string
   updated_at: string
 }
@@ -52,3 +51,10 @@ export interface Resume {
 export interface ChatbotProps {
   resume?: Resume
 }
+
+/** Generic suggested questions for the empty chat state. */
+export const CHATBOT_SUGGESTED_QUESTIONS = [
+  'What are their core skills?',
+  'Summarize recent experience',
+  'Are they open to remote work?',
+] as const

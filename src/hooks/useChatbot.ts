@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { fetchChatbotData, sendChatMessage } from '@/lib/chatbot-actions'
-import { buildChatbotSystemMessage } from '@/lib/chatbot-system-prompt'
-import type { Message, ChatbotData, Resume } from '@/types/chatbot'
+import { isChatbotAvailable, sendChatMessage } from '@/lib/chatbot-actions'
+import {
+  getClientMaxExchanges,
+  getClientMaxMessageLength,
+} from '@/lib/chatbot-limits'
+import type { Message, Resume } from '@/types/chatbot'
 import { sendGAEvent } from '@/lib/utils'
 
 interface UseChatbotProps {
@@ -13,26 +16,25 @@ export function useChatbot({ resume }: UseChatbotProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [chatbotData, setChatbotData] = useState<ChatbotData | null>(null)
   const [dataLoaded, setDataLoaded] = useState(false)
   const [isConversationEnded, setIsConversationEnded] = useState(false)
   const [chatId, setChatId] = useState<string | null>(null)
   const [isHighlighted, setIsHighlighted] = useState(false)
+  const [rateLimitMessage, setRateLimitMessage] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
-  const maxExchanges = parseInt(process.env.NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES || '20', 10)
+  const maxExchanges = getClientMaxExchanges()
+  const maxMessageLength = getClientMaxMessageLength()
   const firstName = resume?.name.split(' ')[0] || 'Assistant'
 
-  // Security: Rate limiting - minimum delay between messages (in milliseconds)
-  const MIN_MESSAGE_DELAY = 1000 // 1 second between messages
+  const MIN_MESSAGE_DELAY = 1000
   const [lastMessageTime, setLastMessageTime] = useState<number>(0)
 
-  // Check if chatbot is active (always true now, as keys are private)
   const isActive = true
 
   useEffect(() => {
     if (isActive && !dataLoaded) {
-      loadChatbotData()
+      void loadAvailability()
     }
   }, [isActive, dataLoaded])
 
@@ -40,10 +42,8 @@ export function useChatbot({ resume }: UseChatbotProps) {
     scrollToBottom()
   }, [messages])
 
-  // Highlight button every 15 seconds for 1 second (only when chat is closed)
   useEffect(() => {
     if (isOpen) {
-      // Clear any existing highlight when chat opens
       setIsHighlighted(false)
       return
     }
@@ -52,32 +52,24 @@ export function useChatbot({ resume }: UseChatbotProps) {
       setIsHighlighted(true)
       setTimeout(() => {
         setIsHighlighted(false)
-      }, 1000) // Highlight for 1 second
-    }, 15000) // Every 15 seconds
+      }, 1000)
+    }, 15000)
 
     return () => clearInterval(interval)
   }, [isOpen])
 
   useEffect(() => {
     if (isOpen) {
-      sendGAEvent('chatbot_open');
+      sendGAEvent('chatbot_open')
     }
   }, [isOpen])
 
-  const loadChatbotData = async () => {
-    console.log('🤖 Chatbot: [CLIENT] Requesting chatbot data from server...')
+  const loadAvailability = async () => {
     try {
-      const data = await fetchChatbotData()
-      if (data) {
-        console.log('✅ Chatbot: [CLIENT] Successfully received chatbot data from server')
-        setChatbotData(data)
-        setDataLoaded(true)
-      } else {
-        console.log('❌ Chatbot: [CLIENT] Server returned no data - check server logs for detailed error analysis')
-        setDataLoaded(false)
-      }
+      const available = await isChatbotAvailable()
+      setDataLoaded(available)
     } catch (error) {
-      console.error('💥 Chatbot: [CLIENT] Failed to fetch data from server:', error)
+      console.error('Chatbot availability check failed:', error)
       setDataLoaded(false)
     }
   }
@@ -86,36 +78,38 @@ export function useChatbot({ resume }: UseChatbotProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const sendMessage = async () => {
-    if (!input.trim() || !chatbotData || isConversationEnded) {
-      console.warn('⚠️ Chatbot: [CLIENT] Cannot send message - missing input, chatbot data, or conversation ended')
+  const sendMessage = async (overrideText?: string) => {
+    const text = (overrideText ?? input).trim()
+    if (!text || isConversationEnded) {
       return
     }
 
-    // Security: Rate limiting - prevent rapid-fire messages
+    if (text.length > maxMessageLength) {
+      setRateLimitMessage(`Message is too long (max ${maxMessageLength} characters).`)
+      return
+    }
+
     const now = Date.now()
     if (now - lastMessageTime < MIN_MESSAGE_DELAY) {
-      console.warn('⚠️ Chatbot: [CLIENT] Rate limit - message sent too quickly')
       return
     }
     setLastMessageTime(now)
+    setRateLimitMessage(null)
 
     let currentChatId = chatId
     if (!currentChatId) {
       currentChatId = crypto.randomUUID()
       setChatId(currentChatId)
-      console.log('🆕 Chatbot: [CLIENT] New chat started with ID:', currentChatId)
     }
 
-    const currentAssistantCount = messages.filter(m => m.role === 'assistant').length
+    const currentAssistantCount = messages.filter((m) => m.role === 'assistant').length
     if (currentAssistantCount >= maxExchanges) {
       const closingMessage: Message = {
         role: 'assistant',
-        content: 'It was nice chatting with you, I have to go now. Talk to you soon!'
+        content: 'It was nice chatting with you, I have to go now. Talk to you soon!',
       }
-      setMessages(prev => [...prev, closingMessage])
+      setMessages((prev) => [...prev, closingMessage])
       setIsConversationEnded(true)
-      // Reset conversation after a delay
       setTimeout(() => {
         setMessages([])
         setIsConversationEnded(false)
@@ -124,78 +118,86 @@ export function useChatbot({ resume }: UseChatbotProps) {
       return
     }
 
-    const userMessage: Message = { role: 'user', content: input }
+    const userMessage: Message = { role: 'user', content: text }
     const conversationMessages = [...messages, userMessage]
     setMessages(conversationMessages)
     setInput('')
     setIsLoading(true)
 
-    console.log('📤 Chatbot: [CLIENT] Sending message via server action...', {
-      messageLength: input.length,
-      conversationLength: conversationMessages.length,
-      chatId: currentChatId
-    })
-
     try {
-      const resumeContext = resume ? `\n\nFull Resume Data:\n${JSON.stringify({ ...resume, name: undefined, slug: undefined, photo: undefined }, null, 2)}` : ''
-      const systemMessage = buildChatbotSystemMessage(
-        chatbotData.bio,
-        chatbotData.prompt,
-        resumeContext
-      )
-      const responseContent = await sendChatMessage(systemMessage, conversationMessages)
+      // Send only user/assistant history — never a system prompt or bio.
+      const history = messages.map((m) => ({ role: m.role, content: m.content }))
+      const result = await sendChatMessage({
+        message: text,
+        history,
+        sessionId: currentChatId,
+      })
+
+      if (!result.ok) {
+        if (result.error === 'rate_limited') {
+          setRateLimitMessage(
+            result.message ||
+              'Please slow down and try again later.'
+          )
+          if (result.retryAfter && result.retryAfter > 3600) {
+            setIsConversationEnded(true)
+          }
+        }
+        const errorMessage: Message = {
+          role: 'assistant',
+          content: result.message,
+        }
+        setMessages((prev) => [...prev, errorMessage])
+        return
+      }
 
       const assistantMessage: Message = {
         role: 'assistant',
-        content: responseContent || 'Sorry, I couldn\'t generate a response.'
+        content: result.content,
       }
 
-      console.log('✅ Chatbot: [CLIENT] Received response from server action', {
-        responseLength: responseContent?.length || 0,
-        hasResponse: !!responseContent,
-        chatId: currentChatId
-      })
-
-      setMessages(prev => [...prev, assistantMessage])
-      sendGAEvent('chatbot_message_sent');
+      setMessages((prev) => [...prev, assistantMessage])
+      sendGAEvent('chatbot_message_sent')
     } catch (error) {
-      console.error('💥 Chatbot: [CLIENT] Server action failed (chatId: ' + currentChatId + '):', error)
+      console.error('Chatbot server action failed:', error)
       const errorMessage: Message = {
         role: 'assistant',
-        content: 'Sorry, there was an error processing your message. Please try again.'
+        content: 'Sorry, there was an error processing your message. Please try again.',
       }
-      setMessages(prev => [...prev, errorMessage])
+      setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
-      console.log('🔄 Chatbot: [CLIENT] Message processing completed')
     }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      sendMessage()
+      void sendMessage()
     }
   }
 
+  const sendSuggestedQuestion = (question: string) => {
+    void sendMessage(question)
+  }
+
   return {
-    // State
     isOpen,
     messages,
     input,
     isLoading,
-    chatbotData,
     dataLoaded,
     isConversationEnded,
     isHighlighted,
     messagesEndRef,
     firstName,
     isActive,
-
-    // Actions
+    maxMessageLength,
+    rateLimitMessage,
     setIsOpen,
     setInput,
     sendMessage,
+    sendSuggestedQuestion,
     handleKeyPress,
   }
 }

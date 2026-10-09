@@ -39,6 +39,11 @@ export interface Resume {
   phone?: string
   linkedin?: string
   website?: string
+  /** Optional logistics — leave empty for the owner to fill; never invent values. */
+  open_to_remote?: boolean | null
+  open_to_relocation?: boolean | null
+  availability?: string | null
+  languages?: string[] | null
   created_at: string
   updated_at: string
 }

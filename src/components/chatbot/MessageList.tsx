@@ -2,11 +2,13 @@ import type { ComponentProps } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { MarkdownLink } from '@/components/markdown'
 import type { Message } from '@/types/chatbot'
+import { CHATBOT_SUGGESTED_QUESTIONS } from '@/types/chatbot'
 
 interface MessageListProps {
   messages: Message[]
   isLoading: boolean
   messagesEndRef: React.RefObject<HTMLDivElement | null>
+  onSuggestedQuestion?: (question: string) => void
 }
 
 const assistantMarkdownComponents = {
@@ -44,12 +46,31 @@ const assistantMarkdownComponents = {
   br: (props: ComponentProps<'br'>) => <br {...props} />,
 }
 
-export function MessageList({ messages, isLoading, messagesEndRef }: MessageListProps) {
+export function MessageList({
+  messages,
+  isLoading,
+  messagesEndRef,
+  onSuggestedQuestion,
+}: MessageListProps) {
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {messages.length === 0 && (
-        <div className="text-center text-gray-500 dark:text-gray-400">
-          <p className="text-sm">Hi! I&apos;m here to help. What would you like to know?</p>
+        <div className="text-center text-gray-500 dark:text-gray-400 space-y-3">
+          <p className="text-sm">Hi! I&apos;m an AI assistant. What would you like to know?</p>
+          {onSuggestedQuestion && (
+            <div className="flex flex-col gap-2">
+              {CHATBOT_SUGGESTED_QUESTIONS.map((question) => (
+                <button
+                  key={question}
+                  type="button"
+                  onClick={() => onSuggestedQuestion(question)}
+                  className="text-left text-sm px-3 py-2 rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
       {messages.map((message, index) => (

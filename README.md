@@ -24,9 +24,19 @@ GROQ_API_KEY=your_groq_api_key
 NEXT_PUBLIC_GROQ_MODELNAME=openai/gpt-oss-20b
 # Fallback suggestion for heavier workloads: openai/gpt-oss-120b
 GROQ_REASONING_EFFORT=medium
-NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES=20
-CHATBOT_MAX_MESSAGE_LENGTH=1000
+NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES=15
+CHATBOT_MAX_MESSAGE_LENGTH=400
 CHATBOT_MAX_CONVERSATION_LENGTH=10000
+CHATBOT_MAX_HISTORY_MESSAGES=6
+CHATBOT_MAX_OUTPUT_TOKENS=400
+CHATBOT_RATE_LIMIT_PER_MINUTE=5
+CHATBOT_RATE_LIMIT_PER_DAY=30
+# Optional UI mirror of message length (defaults to 400)
+# NEXT_PUBLIC_CHATBOT_MAX_MESSAGE_LENGTH=400
+
+# Optional: durable rate limits via Upstash Redis REST (free tier)
+# UPSTASH_REDIS_REST_URL=
+# UPSTASH_REDIS_REST_TOKEN=
 
 # Optional: Supabase Caching
 SUPABASE_CACHE_DURATION_SECONDS=30
@@ -117,32 +127,37 @@ The chatbot is automatically enabled when you provide a `GROQ_API_KEY` in your e
 - **`GROQ_API_KEY`**: Your Groq API key for AI chat functionality
 - **`NEXT_PUBLIC_GROQ_MODELNAME`**: AI model to use (default: `openai/gpt-oss-20b`; fallback suggestion: `openai/gpt-oss-120b`). Resolved server-side; client-supplied model values are ignored.
 - **`GROQ_REASONING_EFFORT`**: Reasoning effort for `openai/gpt-oss*` models (default: `medium`; options: `low`, `medium`, `high`, `none`). Set to `none` or leave empty to omit the parameter. Ignored for non-gpt-oss models.
-- **`NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES`**: Maximum number of AI responses per conversation (default: 20)
-- **`CHATBOT_MAX_MESSAGE_LENGTH`**: Maximum characters allowed per individual message (default: 1000)
-- **`CHATBOT_MAX_CONVERSATION_LENGTH`**: Maximum total characters for entire conversation before truncation (default: 10000)
+- **`NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES`**: Maximum messages per session, enforced server-side (default: 15)
+- **`CHATBOT_MAX_MESSAGE_LENGTH`**: Maximum characters per user message (default: 400)
+- **`CHATBOT_MAX_CONVERSATION_LENGTH`**: Maximum total characters for the prompt+history before truncation (default: 10000)
+- **`CHATBOT_MAX_HISTORY_MESSAGES`**: Max prior user/assistant messages sent to the model (default: 6)
+- **`CHATBOT_MAX_OUTPUT_TOKENS`**: Cap on model completion tokens (default: 400)
+- **`CHATBOT_RATE_LIMIT_PER_MINUTE`**: Per-IP requests per minute (default: 5)
+- **`CHATBOT_RATE_LIMIT_PER_DAY`**: Per-IP requests per day (default: 30)
+- **`UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`**: Optional. When both are set, rate limits use Upstash Redis REST (durable across serverless instances). Otherwise an in-memory limiter is used (best-effort per instance).
 
 ### Chatbot Data Setup
 
-The chatbot uses data from two sources:
+The chatbot uses data from two sources, loaded **only on the server**:
 
 1. **Bio & Prompt** (from `chatbot` table):
    - `bio`: General information about yourself
    - `prompt`: Custom instructions for the AI assistant
+   - Never sent to the browser
 
 2. **Resume Context** (from `resumes` table):
-   - Automatically includes your professional experience, education, skills, and projects
-   - Sensitive data (name, photo URL) is excluded for privacy
+   - Professional experience, education, skills, and projects
+   - Optional logistics fields (`open_to_remote`, `open_to_relocation`, `availability`, `languages`) — leave empty until filled in
+   - Sensitive identifiers are excluded from the model context
 
 ### Security Features
 
-The chatbot includes several security measures:
-
-- **Rate Limiting**: 1-second delay between messages
-- **Message Length Limits**: Configurable maximum characters per message (default: 1000)
-- **Conversation Length Limits**: Automatic truncation of long conversations (default: 10000 total characters)
-- **Input Sanitization**: HTML/script tags are automatically removed
-- **Conversation Limits**: Maximum 20 exchanges per conversation (configurable)
-- **Privacy Protection**: Personal identifiers excluded from AI context
+- **Server-side system prompt**: Bio, custom prompt, and resume context are assembled on the server. The client sends only the new message and a short user/assistant history.
+- **Rate limiting**: Per-IP minute/day limits and per-session message caps (in-memory by default; optional Upstash Redis)
+- **Message / output caps**: Configurable max message length, history window, and `max_tokens`
+- **Input sanitization**: HTML/script tags are removed
+- **AI disclosure**: The UI labels the bot as an AI assistant; the prompt requires truthful answers if asked
+- **Origin check**: Explicit Origin/Host match in addition to Next.js server-action CSRF protection
 
 ## Getting Started
 
