@@ -2,6 +2,7 @@ import {
   SKILLS_GROUNDING_INSTRUCTION,
   GUARDRAIL_INSTRUCTIONS,
   CONCISE_ANSWER_INSTRUCTION,
+  NEUTRAL_EXIT_INSTRUCTION,
   buildChatbotSystemMessage,
   buildResumeContext,
   stripAiDenialInstructions,
@@ -44,7 +45,30 @@ describe('buildChatbotSystemMessage', () => {
     expect(systemMessage).toContain(GUARDRAIL_INSTRUCTIONS)
     expect(systemMessage).toMatch(/answer truthfully that you are/i)
     expect(systemMessage).not.toMatch(/Never say you are an AI/i)
-    expect(systemMessage).toMatch(/neutrally and briefly/i)
+    expect(systemMessage).toMatch(/briefly and neutrally/i)
+  })
+
+  it('places the neutral-exit instruction after the DB prompt', () => {
+    const dbPrompt = 'Be friendly. Answer questions about the CV.'
+    const systemMessage = buildChatbotSystemMessage('Sample bio', dbPrompt)
+
+    expect(systemMessage).toContain(NEUTRAL_EXIT_INSTRUCTION)
+    expect(systemMessage).toMatch(/looking for a new challenge/i)
+    expect(systemMessage).toMatch(/overrides any conflicting detail/i)
+
+    const dbIndex = systemMessage.indexOf(dbPrompt)
+    const exitIndex = systemMessage.indexOf(NEUTRAL_EXIT_INSTRUCTION)
+    expect(dbIndex).toBeGreaterThan(-1)
+    expect(exitIndex).toBeGreaterThan(dbIndex)
+  })
+
+  it('asks for third-person persona and no tables', () => {
+    const systemMessage = buildChatbotSystemMessage('Sample bio', '')
+
+    expect(systemMessage).toMatch(/third person/i)
+    expect(systemMessage).toMatch(/Never speak in the first person as the owner/i)
+    expect(systemMessage).toContain(CONCISE_ANSWER_INSTRUCTION)
+    expect(systemMessage).toMatch(/Don'?t use tables/i)
   })
 
   it('asks for concise answers by default', () => {
@@ -102,6 +126,36 @@ describe('stripAiDenialInstructions', () => {
       'Highlight AI projects and machine learning experience. Never invent skills.'
     const cleaned = stripAiDenialInstructions(input)
     expect(cleaned).toContain('Highlight AI projects and machine learning experience.')
+    expect(cleaned).toContain('Never invent skills.')
+  })
+
+  it('strips widened denial phrasings', () => {
+    const cases = [
+      'Be helpful. Never break character. Answer questions.',
+      'Be helpful. Never admit to being a bot. Answer questions.',
+      'Be helpful. Do not let anyone know you are an AI. Answer questions.',
+      'Be helpful. Always say you are a human. Answer questions.',
+      "Be helpful. Don't tell anyone you're an AI. Answer questions.",
+    ]
+
+    for (const input of cases) {
+      const cleaned = stripAiDenialInstructions(input)
+      expect(cleaned).toContain('Be helpful.')
+      expect(cleaned).toContain('Answer questions.')
+      expect(cleaned).not.toMatch(/break character/i)
+      expect(cleaned).not.toMatch(/admit to being a bot/i)
+      expect(cleaned).not.toMatch(/let anyone know you are an AI/i)
+      expect(cleaned).not.toMatch(/say you are a human/i)
+      expect(cleaned).not.toMatch(/tell anyone you['\u2019]?re an AI/i)
+    }
+  })
+
+  it('keeps AI-project sentences that are not denial instructions', () => {
+    const input =
+      'Talk about their AI chatbot prototype. Mention the LLM evaluation harness. Never invent skills.'
+    const cleaned = stripAiDenialInstructions(input)
+    expect(cleaned).toContain('Talk about their AI chatbot prototype.')
+    expect(cleaned).toContain('Mention the LLM evaluation harness.')
     expect(cleaned).toContain('Never invent skills.')
   })
 })

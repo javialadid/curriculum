@@ -40,6 +40,27 @@ describe('finalizeAssistantContent', () => {
       'See tools (e.g. linters).'.length - 1
     )
   })
+
+  it('treats etc. at end of text or before a capitalised sentence as a sentence end', () => {
+    expect(findLastSentenceEnd('Skills include React, Node, etc.')).toBe(
+      'Skills include React, Node, etc.'.length - 1
+    )
+    expect(
+      findLastSentenceEnd('Skills include React, Node, etc. They also know Python and more cut')
+    ).toBe('Skills include React, Node, etc.'.length - 1)
+
+    // Mid-clause etc. before lowercase is still an abbreviation
+    expect(
+      findLastSentenceEnd('Skills include React, Node, etc. and more cut off text')
+    ).toBe(-1)
+
+    expect(
+      finalizeAssistantContent(
+        'Skills include React, Node, etc. They also worked on testi',
+        'length'
+      )
+    ).toBe('Skills include React, Node, etc. (reply shortened)')
+  })
 })
 
 describe('extractAssistantText', () => {

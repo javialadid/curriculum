@@ -1,6 +1,8 @@
 export interface Message {
   role: 'user' | 'assistant'
   content: string
+  /** Shown in the UI but omitted from model history (failed / rate-limited turns). */
+  excludeFromHistory?: boolean
 }
 
 export interface ExperienceItem {
