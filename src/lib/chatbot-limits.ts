@@ -33,22 +33,36 @@ export function truncateAtWordBoundary(text: string, maxChars: number): string {
   return sliced
 }
 
+/**
+ * Parse a plain positive integer env value. Rejects scientific notation,
+ * trailing junk, floats, zero, and negatives (same rules as server config).
+ */
+export function parsePositiveInt(raw: string | undefined, fallback: number): number {
+  if (raw === undefined || raw === '') {
+    return fallback
+  }
+  const parsed = Number(raw)
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return fallback
+  }
+  if (!/^\d+$/.test(raw.trim())) {
+    return fallback
+  }
+  return parsed
+}
+
 /** Client-visible max message length (mirrors server default). */
 export function getClientMaxMessageLength(): number {
-  const raw = process.env.NEXT_PUBLIC_CHATBOT_MAX_MESSAGE_LENGTH
-  if (raw === undefined || raw === '') {
-    return DEFAULT_MAX_MESSAGE_LENGTH
-  }
-  const parsed = parseInt(raw, 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MAX_MESSAGE_LENGTH
+  return parsePositiveInt(
+    process.env.NEXT_PUBLIC_CHATBOT_MAX_MESSAGE_LENGTH,
+    DEFAULT_MAX_MESSAGE_LENGTH
+  )
 }
 
 /** Client-visible max exchanges hint (server still enforces). */
 export function getClientMaxExchanges(): number {
-  const raw = process.env.NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES
-  if (raw === undefined || raw === '') {
-    return DEFAULT_MAX_EXCHANGES
-  }
-  const parsed = parseInt(raw, 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MAX_EXCHANGES
+  return parsePositiveInt(
+    process.env.NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES,
+    DEFAULT_MAX_EXCHANGES
+  )
 }

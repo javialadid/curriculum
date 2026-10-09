@@ -48,6 +48,9 @@ describe('buildChatbotSystemMessage', () => {
     expect(systemMessage).toMatch(/use only wording stated in the provided data for that specific role/i)
     expect(systemMessage).toMatch(/never borrow a reason from another role/i)
     expect(systemMessage).toMatch(/Never describe a role marked current as ended/i)
+    expect(systemMessage).toMatch(
+      /Never mention funding problems, unpaid pay, broken promises, conflicts, or blame/i
+    )
   })
 
   it('places the exit-reason instruction after the DB prompt and bio', () => {
@@ -65,6 +68,26 @@ describe('buildChatbotSystemMessage', () => {
     expect(dbIndex).toBeGreaterThan(-1)
     expect(bioIndex).toBeGreaterThan(dbIndex)
     expect(exitIndex).toBeGreaterThan(bioIndex)
+  })
+
+  it('places exit and third-person instructions after the resume data', () => {
+    const resumeMarker = 'Full Resume Data:\n{"skills":{"languages":["TypeScript"]}}'
+    const resumeContext = `\n\n${resumeMarker}`
+    const systemMessage = buildChatbotSystemMessage(
+      'Sample bio',
+      'Custom prompt',
+      resumeContext
+    )
+
+    const resumeIndex = systemMessage.indexOf(resumeMarker)
+    const exitIndex = systemMessage.indexOf(NEUTRAL_EXIT_INSTRUCTION)
+    const thirdPersonIndex = systemMessage.indexOf(
+      'Refer to the owner in the third person'
+    )
+
+    expect(resumeIndex).toBeGreaterThan(-1)
+    expect(exitIndex).toBeGreaterThan(resumeIndex)
+    expect(thirdPersonIndex).toBeGreaterThan(resumeIndex)
   })
 
   it('asks for third-person persona with override wording and no tables', () => {

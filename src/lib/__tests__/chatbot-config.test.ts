@@ -1,7 +1,10 @@
 import { getChatbotLimits } from '../chatbot-config'
 import {
+  DEFAULT_MAX_EXCHANGES,
   DEFAULT_MAX_MESSAGE_LENGTH,
   DEFAULT_MAX_OUTPUT_TOKENS,
+  getClientMaxExchanges,
+  getClientMaxMessageLength,
 } from '../chatbot-limits'
 
 describe('getChatbotLimits parsePositiveInt', () => {
@@ -43,5 +46,27 @@ describe('getChatbotLimits parsePositiveInt', () => {
 
     process.env.CHATBOT_MAX_MESSAGE_LENGTH = '-3'
     expect(getChatbotLimits().maxMessageLength).toBe(DEFAULT_MAX_MESSAGE_LENGTH)
+  })
+})
+
+describe('client limit helpers parsePositiveInt', () => {
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_CHATBOT_MAX_MESSAGE_LENGTH
+    delete process.env.NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES
+  })
+
+  it('accepts plain positive integers', () => {
+    process.env.NEXT_PUBLIC_CHATBOT_MAX_MESSAGE_LENGTH = '300'
+    process.env.NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES = '8'
+    expect(getClientMaxMessageLength()).toBe(300)
+    expect(getClientMaxExchanges()).toBe(8)
+  })
+
+  it("falls back for '1.5e3' and '12abc'", () => {
+    process.env.NEXT_PUBLIC_CHATBOT_MAX_MESSAGE_LENGTH = '1.5e3'
+    expect(getClientMaxMessageLength()).toBe(DEFAULT_MAX_MESSAGE_LENGTH)
+
+    process.env.NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES = '12abc'
+    expect(getClientMaxExchanges()).toBe(DEFAULT_MAX_EXCHANGES)
   })
 })

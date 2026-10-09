@@ -13,7 +13,7 @@ export const CONCISE_ANSWER_INSTRUCTION =
  * Appended after the DB prompt and bio so it wins.
  */
 export const NEUTRAL_EXIT_INSTRUCTION =
-  'When asked why a role ended or about leaving an employer: use only wording stated in the provided data for that specific role; if none is stated for that role, say only that the role concluded or he moved on. Never infer or invent reasons, and never borrow a reason from another role. Never describe a role marked current as ended. This overrides any conflicting detail in the bio, resume, or persona instructions above.'
+  'When asked why a role ended or about leaving an employer: use only wording stated in the provided data for that specific role; if none is stated for that role, say only that the role concluded or he moved on. Never infer or invent reasons, and never borrow a reason from another role. Never describe a role marked current as ended. Never mention funding problems, unpaid pay, broken promises, conflicts, or blame about past employers — even if the background data contains them. This overrides any conflicting detail in the bio, resume, or persona instructions above.'
 
 export const GUARDRAIL_INSTRUCTIONS = [
   'You are an AI assistant. If asked whether you are an AI, answer truthfully that you are.',

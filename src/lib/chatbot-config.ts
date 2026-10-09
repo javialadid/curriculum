@@ -8,22 +8,8 @@ import {
   DEFAULT_MAX_OUTPUT_TOKENS,
   DEFAULT_RATE_LIMIT_PER_DAY,
   DEFAULT_RATE_LIMIT_PER_MINUTE,
+  parsePositiveInt,
 } from '@/lib/chatbot-limits'
-
-function parsePositiveInt(raw: string | undefined, fallback: number): number {
-  if (raw === undefined || raw === '') {
-    return fallback
-  }
-  const parsed = Number(raw)
-  // Require a plain positive integer string — reject '1.5e3', '12abc', floats.
-  if (!Number.isInteger(parsed) || parsed <= 0) {
-    return fallback
-  }
-  if (!/^\d+$/.test(raw.trim())) {
-    return fallback
-  }
-  return parsed
-}
 
 export function getChatbotLimits() {
   return {
