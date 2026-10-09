@@ -14,6 +14,19 @@ export const DEFAULT_MAX_EXCHANGES = 15
 export const DEFAULT_RATE_LIMIT_PER_MINUTE = 5
 export const DEFAULT_RATE_LIMIT_PER_DAY = 30
 
+/** Truncate at the last whitespace within maxChars; hard-cut if no space found. */
+export function truncateAtWordBoundary(text: string, maxChars: number): string {
+  if (text.length <= maxChars) {
+    return text
+  }
+  const sliced = text.slice(0, maxChars)
+  const lastSpace = sliced.lastIndexOf(' ')
+  if (lastSpace > 0) {
+    return sliced.slice(0, lastSpace).trimEnd()
+  }
+  return sliced
+}
+
 /** Client-visible max message length (mirrors server default). */
 export function getClientMaxMessageLength(): number {
   const raw = process.env.NEXT_PUBLIC_CHATBOT_MAX_MESSAGE_LENGTH

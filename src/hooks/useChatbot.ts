@@ -120,11 +120,27 @@ export function useChatbot({ resume }: UseChatbotProps) {
     }
 
     const userMessage: Message = { role: 'user', content: text }
-    // History for the model is prior successful turns only (no status/error text).
-    const historyForModel = messages.map((m) => ({ role: m.role, content: m.content }))
+    // Prior successful turns only — failed/rate-limited user questions are marked
+    // and filtered out so they are never resent to the model.
+    const historyForModel = messages
+      .filter((m) => !m.excludeFromHistory)
+      .map((m) => ({ role: m.role, content: m.content }))
     setMessages((prev) => [...prev, userMessage])
     setInput('')
     setIsLoading(true)
+
+    const markLastUserExcluded = () => {
+      setMessages((prev) => {
+        const copy = [...prev]
+        for (let i = copy.length - 1; i >= 0; i--) {
+          if (copy[i].role === 'user') {
+            copy[i] = { ...copy[i], excludeFromHistory: true }
+            break
+          }
+        }
+        return copy
+      })
+    }
 
     try {
       const result = await sendChatMessage({
@@ -135,8 +151,8 @@ export function useChatbot({ resume }: UseChatbotProps) {
 
       if (!result.ok) {
         // Keep the user's question visible; status banner shows the error below it.
-        // Orphaned user turns are fine — the next send only includes successful pairs
-        // once an assistant reply lands (history is prior messages at send time).
+        // Mark the turn so later sends omit it from model history.
+        markLastUserExcluded()
         setStatusMessage(result.message)
         if (result.error === 'rate_limited' && result.retryAfter && result.retryAfter > 3600) {
           setIsConversationEnded(true)
@@ -154,6 +170,7 @@ export function useChatbot({ resume }: UseChatbotProps) {
     } catch (error) {
       console.error('Chatbot server action failed:', error)
       // Keep the user's question visible; show the error as a UI-only status.
+      markLastUserExcluded()
       setStatusMessage('Sorry, there was an error processing your message. Please try again.')
     } finally {
       setIsLoading(false)

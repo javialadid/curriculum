@@ -1,5 +1,6 @@
 import 'server-only'
 import {
+  DEFAULT_MAX_ASSISTANT_HISTORY_CHARS,
   DEFAULT_MAX_CONVERSATION_LENGTH,
   DEFAULT_MAX_EXCHANGES,
   DEFAULT_MAX_HISTORY_MESSAGES,
@@ -46,6 +47,10 @@ export function getChatbotLimits() {
     rateLimitPerDay: parsePositiveInt(
       process.env.CHATBOT_RATE_LIMIT_PER_DAY,
       DEFAULT_RATE_LIMIT_PER_DAY
+    ),
+    maxAssistantHistoryChars: parsePositiveInt(
+      process.env.CHATBOT_MAX_ASSISTANT_HISTORY_CHARS,
+      DEFAULT_MAX_ASSISTANT_HISTORY_CHARS
     ),
   }
 }

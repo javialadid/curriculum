@@ -46,6 +46,7 @@ import {
   resolveGroqModel,
   resolveReasoningEffort,
 } from '../chatbot-actions'
+import { truncateAtWordBoundary } from '../chatbot-limits'
 import { sanitizeClientHistory, checkOriginAllowed } from '../chatbot-request'
 import {
   MemoryRateLimiter,
@@ -255,6 +256,7 @@ describe('sendChatMessage security and caps', () => {
     delete process.env.UPSTASH_REDIS_REST_TOKEN
     process.env.CHATBOT_MAX_MESSAGE_LENGTH = '400'
     delete process.env.CHATBOT_MAX_OUTPUT_TOKENS
+    delete process.env.CHATBOT_MAX_ASSISTANT_HISTORY_CHARS
     process.env.CHATBOT_RATE_LIMIT_PER_MINUTE = '100'
     process.env.CHATBOT_RATE_LIMIT_PER_DAY = '100'
     process.env.NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES = '15'
@@ -402,6 +404,30 @@ describe('sendChatMessage security and caps', () => {
     }>
     const assistant = msgs.find((m) => m.role === 'assistant')
     expect(assistant?.content.length).toBe(1500)
+  })
+
+  it('truncates assistant history at a word boundary and respects the env cap', async () => {
+    expect(truncateAtWordBoundary('one two three four five', 12)).toBe('one two')
+    expect(truncateAtWordBoundary('abcdefghij', 5)).toBe('abcde')
+
+    process.env.CHATBOT_MAX_ASSISTANT_HISTORY_CHARS = '20'
+    const longAssistant = 'alpha beta gamma delta epsilon zeta'
+    const result = await sendChatMessage({
+      message: 'Next question',
+      history: [{ role: 'assistant', content: longAssistant }],
+      sessionId: 'sess-assistant-word-bound',
+    })
+
+    expect(result.ok).toBe(true)
+    const msgs = mockCreate.mock.calls[0][0].messages as Array<{
+      role: string
+      content: string
+    }>
+    const assistant = msgs.find((m) => m.role === 'assistant')
+    expect(assistant?.content.length).toBeLessThanOrEqual(20)
+    expect(assistant?.content).toBe(truncateAtWordBoundary(longAssistant, 20))
+    expect(assistant?.content.endsWith(' ')).toBe(false)
+    delete process.env.CHATBOT_MAX_ASSISTANT_HISTORY_CHARS
   })
 
   it('keeps recent history even when the system prompt exceeds the conversation budget', async () => {

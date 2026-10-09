@@ -23,7 +23,7 @@ import type {
   SendChatMessageInput,
   SendChatResult,
 } from '@/lib/chatbot-actions-types'
-import { DEFAULT_MAX_ASSISTANT_HISTORY_CHARS } from '@/lib/chatbot-limits'
+import { truncateAtWordBoundary } from '@/lib/chatbot-limits'
 
 export type {
   ClientChatMessage,
@@ -236,8 +236,8 @@ export async function sendChatMessage(
   const historySanitized: ClientChatMessage[] = []
   for (const msg of historyPreview) {
     let content = msg.content
-    if (msg.role === 'assistant' && content.length > DEFAULT_MAX_ASSISTANT_HISTORY_CHARS) {
-      content = content.slice(0, DEFAULT_MAX_ASSISTANT_HISTORY_CHARS)
+    if (msg.role === 'assistant' && content.length > limits.maxAssistantHistoryChars) {
+      content = truncateAtWordBoundary(content, limits.maxAssistantHistoryChars)
     }
     const cleaned = await sanitizeMessage(content)
     if (!cleaned && msg.content) {

@@ -8,27 +8,30 @@ interface CookieConsentProps {
 }
 
 export function CookieConsent({ gaEnabled = false }: CookieConsentProps) {
-  // Initialize state based on localStorage values to avoid useEffect setState calls
-  const [showBanner, setShowBanner] = useState(() => {
-    if (!gaEnabled) return false
-    const sessionDismissed = typeof window !== 'undefined' ? sessionStorage.getItem('cookie-banner-dismissed') : null
-    if (sessionDismissed) return false
+  // Start with SSR-safe defaults; read storage after mount to avoid
+  // React hydration mismatch (#418) for returning visitors.
+  const [showBanner, setShowBanner] = useState(false)
+  const [hasConsented, setHasConsented] = useState(false)
+  const [isReturnVisitor, setIsReturnVisitor] = useState(false)
+  const [ready, setReady] = useState(false)
 
-    const consent = typeof window !== 'undefined' ? localStorage.getItem('cookie-consent') : null
-    return !consent || consent === 'declined'
-  })
+  useEffect(() => {
+    if (!gaEnabled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional post-mount storage read
+      setReady(true)
+      return
+    }
 
-  const [hasConsented, setHasConsented] = useState(() => {
-    if (typeof window === 'undefined') return false
+    const sessionDismissed = sessionStorage.getItem('cookie-banner-dismissed')
     const consent = localStorage.getItem('cookie-consent')
-    return consent === 'accepted'
-  })
 
-  const [isReturnVisitor] = useState(() => {
-    if (typeof window === 'undefined') return false
-    const consent = localStorage.getItem('cookie-consent')
-    return consent === 'declined'
-  })
+    setHasConsented(consent === 'accepted')
+    setIsReturnVisitor(consent === 'declined')
+    setShowBanner(
+      !sessionDismissed && (!consent || consent === 'declined')
+    )
+    setReady(true)
+  }, [gaEnabled])
 
   // Only use effect for GA initialization when consent changes
   useEffect(() => {
@@ -72,7 +75,7 @@ export function CookieConsent({ gaEnabled = false }: CookieConsentProps) {
     setShowBanner(false)
   }
 
-  if (!showBanner || hasConsented) return null
+  if (!ready || !showBanner || hasConsented) return null
 
   return (
     <div className="fixed bottom-0 left-2 sm:left-1/2 sm:-translate-x-1/2 z-50 bg-background border border-border rounded-lg p-2 shadow-lg print:hidden">

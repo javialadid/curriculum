@@ -73,7 +73,23 @@ function isCommonAbbreviationAt(text: string, dotIndex: number): boolean {
     start -= 1
   }
   const token = text.slice(start, dotIndex + 1).toLowerCase()
-  return COMMON_ABBREVIATIONS.has(token)
+  if (!COMMON_ABBREVIATIONS.has(token)) {
+    return false
+  }
+
+  // "etc." at the real end of the text, or before a capitalised new sentence,
+  // is a sentence end — not a mid-clause abbreviation.
+  if (token === 'etc.') {
+    const after = text.slice(dotIndex + 1)
+    if (after.trim() === '') {
+      return false
+    }
+    if (/^\s+[A-Z]/.test(after)) {
+      return false
+    }
+  }
+
+  return true
 }
 
 /**
