@@ -1,16 +1,12 @@
 import { render, screen } from '@testing-library/react'
 import Chatbot from '../Chatbot'
 
-
-// Mock the useChatbot hook using ES modules
 jest.mock('../../hooks/useChatbot', () => ({
-  useChatbot: jest.fn()
+  useChatbot: jest.fn(),
 }))
 
-// Import after mock to get the mocked version
 import { useChatbot } from '../../hooks/useChatbot'
 
-// Mocked hook for testing
 const mockUseChatbot = jest.mocked(useChatbot)
 
 describe('Chatbot Integration Test', () => {
@@ -27,28 +23,31 @@ describe('Chatbot Integration Test', () => {
     tag_line: 'Building great software',
     current_location: 'San Francisco, CA',
     created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
+    updated_at: '2024-01-01T00:00:00Z',
+  }
+
+  const baseHook = {
+    isOpen: false,
+    messages: [] as { role: 'user' | 'assistant'; content: string }[],
+    input: '',
+    isLoading: false,
+    dataLoaded: true,
+    isConversationEnded: false,
+    isHighlighted: false,
+    messagesEndRef: { current: null },
+    firstName: 'John',
+    isActive: true,
+    maxMessageLength: 400,
+    rateLimitMessage: null as string | null,
+    setIsOpen: jest.fn(),
+    setInput: jest.fn(),
+    sendMessage: jest.fn(),
+    sendSuggestedQuestion: jest.fn(),
+    handleKeyPress: jest.fn(),
   }
 
   it('should render chatbot button when active and data loaded', () => {
-    // Mock the hook to return active chatbot
-    mockUseChatbot.mockReturnValue({
-      isOpen: false,
-      messages: [],
-      input: '',
-      isLoading: false,
-      chatbotData: { bio: 'Test bio', prompt: 'Test prompt' },
-      dataLoaded: true,
-      isConversationEnded: false,
-      isHighlighted: false,
-      messagesEndRef: { current: null },
-      firstName: 'John',
-      isActive: true,
-      setIsOpen: jest.fn(),
-      setInput: jest.fn(),
-      sendMessage: jest.fn(),
-      handleKeyPress: jest.fn()
-    })
+    mockUseChatbot.mockReturnValue({ ...baseHook })
 
     render(<Chatbot resume={mockResume} />)
 
@@ -56,55 +55,30 @@ describe('Chatbot Integration Test', () => {
   })
 
   it('should not render when chatbot is not active', () => {
-    // Mock the hook to return inactive chatbot
     mockUseChatbot.mockReturnValue({
-      isOpen: false,
-      messages: [],
-      input: '',
-      isLoading: false,
-      chatbotData: null,
-      dataLoaded: true,
-      isConversationEnded: false,
-      isHighlighted: false,
-      messagesEndRef: { current: null },
-      firstName: 'John',
-      isActive: false, // Not active due to missing API key
-      setIsOpen: jest.fn(),
-      setInput: jest.fn(),
-      sendMessage: jest.fn(),
-      handleKeyPress: jest.fn()
+      ...baseHook,
+      isActive: false,
     })
 
     const { container } = render(<Chatbot resume={mockResume} />)
     expect(container.firstChild).toBeNull()
   })
 
-  it('should display chat window when open', () => {
+  it('should display chat window when open with AI disclosure', () => {
     mockUseChatbot.mockReturnValue({
-      isOpen: true, // Chat is open
+      ...baseHook,
+      isOpen: true,
       messages: [
         { role: 'user', content: 'Hello' },
-        { role: 'assistant', content: 'Hi there!' }
+        { role: 'assistant', content: 'Hi there!' },
       ],
       input: 'How are you?',
-      isLoading: false,
-      chatbotData: { bio: 'Test bio', prompt: 'Test prompt' },
-      dataLoaded: true,
-      isConversationEnded: false,
-      isHighlighted: false,
-      messagesEndRef: { current: null },
-      firstName: 'John',
-      isActive: true,
-      setIsOpen: jest.fn(),
-      setInput: jest.fn(),
-      sendMessage: jest.fn(),
-      handleKeyPress: jest.fn()
     })
 
     render(<Chatbot resume={mockResume} />)
 
-    // Verify chat window is open and shows messages
     expect(screen.getByText('AI John')).toBeInTheDocument()
+    expect(screen.getByText(/AI assistant/i)).toBeInTheDocument()
     expect(screen.getByText('Hello')).toBeInTheDocument()
     expect(screen.getByText('Hi there!')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Type your message...')).toBeInTheDocument()

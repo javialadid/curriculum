@@ -11,26 +11,23 @@ export default function Chatbot({ resume }: ChatbotProps) {
     messages,
     input,
     isLoading,
-    chatbotData,
     dataLoaded,
     isConversationEnded,
     isHighlighted,
     messagesEndRef,
     firstName,
     isActive,
+    maxMessageLength,
+    rateLimitMessage,
     setIsOpen,
     setInput,
     sendMessage,
+    sendSuggestedQuestion,
     handleKeyPress,
   } = useChatbot({ resume })
 
   if (!isActive || !dataLoaded) {
-    console.log('🚫 Chatbot: [CLIENT] Not rendering chatbot button', {
-      isActive,
-      dataLoaded,
-      reason: !isActive ? 'GROQ_API_KEY not present' : 'Chatbot data failed to load'
-    })
-    return null // Don't render if GROQ_API_KEY is not present or chatbot data failed to load
+    return null
   }
 
   return (
@@ -51,10 +48,12 @@ export default function Chatbot({ resume }: ChatbotProps) {
           isLoading={isLoading}
           isConversationEnded={isConversationEnded}
           messagesEndRef={messagesEndRef}
+          maxMessageLength={maxMessageLength}
+          rateLimitMessage={rateLimitMessage}
           onInputChange={setInput}
-          onSendMessage={sendMessage}
+          onSendMessage={() => void sendMessage()}
+          onSuggestedQuestion={sendSuggestedQuestion}
           onKeyPress={handleKeyPress}
-          chatbotData={chatbotData}
         />
       )}
     </div>
