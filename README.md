@@ -94,6 +94,7 @@ CREATE POLICY "Allow anonymous read access on resumes" ON resumes FOR SELECT USI
 3. **Insert Sample Data**
    - Add your chatbot configuration to the `chatbot` table
    - Add your resume data to the `resumes` table
+   - To enable content versioning, apply `supabase/migrations/20261009000000_cv_versioning.sql` (adds a `version` column to both tables; see [CV content versions](#cv-content-versions))
 
 4. **Prevent Supabase from Pausing (Free Tier)**
    - Supabase free tier databases pause after 7 days of inactivity
@@ -219,6 +220,22 @@ src/
 - **Type Safe**: Full TypeScript implementation
 - **Modern UI**: Built with Tailwind CSS
 - **Analytics Integration**: Optional Google Analytics 4 for tracking user interactions like theme toggles and chatbot usage
+
+## CV content versions
+
+Resume and chatbot content is versioned in the database. Each row in `resumes` and `chatbot` has a `version` value (`v1`, `v2`, ...); `resumes` is unique on `(slug, version)` and `chatbot` on `version`. Older versions are never modified, so switching versions loses no data.
+
+- **`CV_VERSION`** (server-only, optional): the content version to serve, matching `v<1-3 digits>` (case-insensitive). Unset or invalid values use the code default, **`v2`**. Do not use a `NEXT_PUBLIC_` prefix.
+- If no row exists for the selected version, the site and chatbot fall back to `v1`, so a missing version never breaks the page.
+- Cache entries are per version, so versions never serve each other's cached data.
+
+**Preview a version without touching production:** in Vercel → Project → Settings → Environment Variables, set `CV_VERSION` (e.g. `v1` or `v3`) for the **Preview** environment only (optionally scoped to one branch) and redeploy that preview. Production keeps its own value.
+
+**Roll back:**
+- Fastest: use Vercel **Instant Rollback** to the previous production deployment.
+- Or set `CV_VERSION=v1` for **Production** and redeploy (environment variable changes only apply to new deployments).
+
+**Add a new version:** copy the current rows with a new `version` (e.g. `insert into resumes (...) select ... , 'v3' from resumes where version = 'v2'`), edit the copy, preview it with a Preview-only `CV_VERSION`, then switch Production.
 
 ## Deployment
 
