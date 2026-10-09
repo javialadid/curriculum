@@ -47,7 +47,7 @@ describe('buildChatbotSystemMessage', () => {
     expect(systemMessage).not.toMatch(/Never say you are an AI/i)
     expect(systemMessage).toContain(NEUTRAL_EXIT_INSTRUCTION)
     expect(systemMessage).toMatch(
-      /take each exit reason only from that same role's own entry/i
+      /take each exit reason only from sentences that explicitly describe that same role \(bio or resume\)/i
     )
     expect(systemMessage).toMatch(
       /never borrow one from another role or from how a role began/i
