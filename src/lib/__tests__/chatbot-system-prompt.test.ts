@@ -45,12 +45,30 @@ describe('buildChatbotSystemMessage', () => {
     expect(systemMessage).toContain(GUARDRAIL_INSTRUCTIONS)
     expect(systemMessage).toMatch(/answer truthfully that you are/i)
     expect(systemMessage).not.toMatch(/Never say you are an AI/i)
-    expect(systemMessage).toMatch(/use only wording stated in the provided data for that specific role/i)
-    expect(systemMessage).toMatch(/never borrow a reason from another role/i)
+    expect(systemMessage).toContain(NEUTRAL_EXIT_INSTRUCTION)
+    expect(systemMessage).toMatch(
+      /take each exit reason only from that same role's own entry/i
+    )
+    expect(systemMessage).toMatch(
+      /never borrow one from another role or from how a role began/i
+    )
+    expect(systemMessage).toMatch(/hired or invited to join/i)
+    expect(systemMessage).toMatch(
+      /use only wording stated in the provided data for that specific role/i
+    )
     expect(systemMessage).toMatch(/Never describe a role marked current as ended/i)
     expect(systemMessage).toMatch(
       /Never mention funding problems, unpaid pay, broken promises, conflicts, or blame/i
     )
+  })
+
+  it('uses exact fallback wording when no exit reason is stated', () => {
+    const systemMessage = buildChatbotSystemMessage('Sample bio', 'Custom prompt')
+
+    expect(NEUTRAL_EXIT_INSTRUCTION).toContain('say exactly "The role concluded."')
+    expect(NEUTRAL_EXIT_INSTRUCTION).toContain('with no timing or cause')
+    expect(systemMessage).toContain('say exactly "The role concluded."')
+    expect(systemMessage).not.toMatch(/role concluded or he moved on/i)
   })
 
   it('places the exit-reason instruction after the DB prompt and bio', () => {
@@ -59,7 +77,6 @@ describe('buildChatbotSystemMessage', () => {
     const systemMessage = buildChatbotSystemMessage(bio, dbPrompt)
 
     expect(systemMessage).toContain(NEUTRAL_EXIT_INSTRUCTION)
-    expect(systemMessage).toMatch(/role concluded or he moved on/i)
     expect(systemMessage).toMatch(/overrides any conflicting detail/i)
 
     const dbIndex = systemMessage.indexOf(dbPrompt)
