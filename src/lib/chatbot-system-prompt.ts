@@ -18,17 +18,40 @@ export const GUARDRAIL_INSTRUCTIONS = [
 ].join(' ')
 
 /**
- * Remove DB/custom prompt sentences or lines that tell the model to hide that it is an AI.
- * Case-insensitive; does not touch the database.
+ * Remove DB/custom prompt sentences that instruct the model to deny being an AI.
+ * Case-insensitive; supports curly apostrophes and common AI synonyms.
+ * Does not touch the database. Leaves factual mentions of AI projects alone.
  */
 export function stripAiDenialInstructions(prompt: string): string {
   if (!prompt) return ''
 
+  // never / don't / do not (+ optional "under any circumstances") + denial verb +
+  // (that) you are / you're / being + AI synonym
+  const aiEntity =
+    '(?:an?\\s+)?(?:a\\.\\s*i\\.?|ai|artificial\\s+intelligence|bot|language\\s+model|llm|chatbot)'
+  const apostrophe = "['\u2019\u2018]"
+  const denialPrefix =
+    `(?:never(?:\\s*,?\\s*under\\s+any\\s+circumstances)?,?|do\\s+not|don${apostrophe}t|dont)`
+  const denialVerb = '(?:say|tell|reveal|admit|disclose|claim|mention)'
+  const beingPhrase = `(?:that\\s+)?(?:you\\s+are|you${apostrophe}re|being)`
+
   const denialSentencePatterns = [
-    /[^.!?\n]*(?:never|do\s+not|don't|dont)\s+(?:say|tell|reveal|admit|disclose|claim)[^.!?\n]*\bai\b[^.!?\n]*[.!?]?/gi,
-    /[^.!?\n]*\byou\s+are\s+not\s+(?:an\s+)?ai\b[^.!?\n]*[.!?]?/gi,
-    /[^.!?\n]*pretend\s+(?:you\s+are\s+)?not\s+(?:an\s+)?ai[^.!?\n]*[.!?]?/gi,
-    /[^.!?\n]*hide\s+(?:that\s+)?you\s+are\s+(?:an\s+)?ai[^.!?\n]*[.!?]?/gi,
+    new RegExp(
+      `[^.!?\\n]*${denialPrefix}\\s+${denialVerb}\\s+${beingPhrase}\\s+${aiEntity}[^.!?\\n]*[.!?]?`,
+      'gi'
+    ),
+    new RegExp(
+      `[^.!?\\n]*\\byou\\s+are\\s+not\\s+${aiEntity}[^.!?\\n]*[.!?]?`,
+      'gi'
+    ),
+    new RegExp(
+      `[^.!?\\n]*pretend\\s+(?:you\\s+are\\s+|you${apostrophe}re\\s+)?not\\s+${aiEntity}[^.!?\\n]*[.!?]?`,
+      'gi'
+    ),
+    new RegExp(
+      `[^.!?\\n]*hide\\s+(?:that\\s+)?(?:you\\s+are|you${apostrophe}re|being)\\s+${aiEntity}[^.!?\\n]*[.!?]?`,
+      'gi'
+    ),
   ]
 
   const cleanedLines = prompt.split(/\n/).map((line) => {

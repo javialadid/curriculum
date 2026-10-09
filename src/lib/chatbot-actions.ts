@@ -23,6 +23,7 @@ import type {
   SendChatMessageInput,
   SendChatResult,
 } from '@/lib/chatbot-actions-types'
+import { DEFAULT_MAX_ASSISTANT_HISTORY_CHARS } from '@/lib/chatbot-limits'
 
 export type {
   ClientChatMessage,
@@ -113,19 +114,21 @@ export async function resolveReasoningEffort(
   return 'medium'
 }
 
+/**
+ * Trim history + new message to the conversation budget.
+ * The system prompt is excluded — it has its own size and must not wipe history.
+ */
 function truncateByConversationLength(
-  systemMessage: string,
   messages: ClientChatMessage[],
   maxLength: number
 ): ClientChatMessage[] {
-  const total =
-    systemMessage.length + messages.reduce((sum, msg) => sum + (msg.content?.length || 0), 0)
+  const total = messages.reduce((sum, msg) => sum + (msg.content?.length || 0), 0)
 
   if (total <= maxLength) {
     return messages
   }
 
-  let currentLength = systemMessage.length
+  let currentLength = 0
   const kept: ClientChatMessage[] = []
 
   for (let i = messages.length - 1; i >= 0; i--) {
@@ -187,8 +190,9 @@ export async function sendChatMessage(
   }
 
   const historyPreview = sanitizeClientHistory(input.history, limits.maxHistoryMessages)
+  // Length cap applies to user turns only; long assistant history is truncated later.
   for (const msg of historyPreview) {
-    if (msg.content.length > limits.maxMessageLength) {
+    if (msg.role === 'user' && msg.content.length > limits.maxMessageLength) {
       return {
         ok: false,
         error: 'message_too_long',
@@ -231,7 +235,11 @@ export async function sendChatMessage(
 
   const historySanitized: ClientChatMessage[] = []
   for (const msg of historyPreview) {
-    const cleaned = await sanitizeMessage(msg.content)
+    let content = msg.content
+    if (msg.role === 'assistant' && content.length > DEFAULT_MAX_ASSISTANT_HISTORY_CHARS) {
+      content = content.slice(0, DEFAULT_MAX_ASSISTANT_HISTORY_CHARS)
+    }
+    const cleaned = await sanitizeMessage(content)
     if (!cleaned && msg.content) {
       return {
         ok: false,
@@ -263,7 +271,6 @@ export async function sendChatMessage(
   )
 
   const conversation = truncateByConversationLength(
-    systemMessage,
     [...historySanitized, { role: 'user', content: sanitizedUserMessage }],
     limits.maxConversationLength
   )

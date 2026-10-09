@@ -134,14 +134,13 @@ export function useChatbot({ resume }: UseChatbotProps) {
       })
 
       if (!result.ok) {
+        // Keep the user's question visible; status banner shows the error below it.
+        // Orphaned user turns are fine — the next send only includes successful pairs
+        // once an assistant reply lands (history is prior messages at send time).
         setStatusMessage(result.message)
         if (result.error === 'rate_limited' && result.retryAfter && result.retryAfter > 3600) {
           setIsConversationEnded(true)
         }
-        // Roll back the optimistic user message so it is not resent as orphaned history.
-        setMessages((prev) =>
-          prev.length > 0 && prev[prev.length - 1]?.role === 'user' ? prev.slice(0, -1) : prev
-        )
         return
       }
 
@@ -154,10 +153,8 @@ export function useChatbot({ resume }: UseChatbotProps) {
       sendGAEvent('chatbot_message_sent')
     } catch (error) {
       console.error('Chatbot server action failed:', error)
+      // Keep the user's question visible; show the error as a UI-only status.
       setStatusMessage('Sorry, there was an error processing your message. Please try again.')
-      setMessages((prev) =>
-        prev.length > 0 && prev[prev.length - 1]?.role === 'user' ? prev.slice(0, -1) : prev
-      )
     } finally {
       setIsLoading(false)
     }

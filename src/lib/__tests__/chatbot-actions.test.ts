@@ -363,6 +363,77 @@ describe('sendChatMessage security and caps', () => {
     expect(mockCreate).toHaveBeenCalledTimes(1)
   })
 
+  it('allows a short follow-up after an 800-char assistant reply', async () => {
+    const longAssistant = 'a'.repeat(800)
+    const result = await sendChatMessage({
+      message: 'Tell me more about that',
+      history: [
+        { role: 'user', content: 'What are their skills?' },
+        { role: 'assistant', content: longAssistant },
+      ],
+      sessionId: 'sess-two-turn',
+    })
+
+    expect(result.ok).toBe(true)
+    expect(mockCreate).toHaveBeenCalledTimes(1)
+    const msgs = mockCreate.mock.calls[0][0].messages as Array<{
+      role: string
+      content: string
+    }>
+    expect(msgs.some((m) => m.role === 'assistant' && m.content.length === 800)).toBe(true)
+    expect(msgs[msgs.length - 1]).toEqual({
+      role: 'user',
+      content: 'Tell me more about that',
+    })
+  })
+
+  it('silently truncates long assistant history instead of rejecting', async () => {
+    const longAssistant = 'b'.repeat(2000)
+    const result = await sendChatMessage({
+      message: 'Next question',
+      history: [{ role: 'assistant', content: longAssistant }],
+      sessionId: 'sess-assistant-trunc',
+    })
+
+    expect(result.ok).toBe(true)
+    const msgs = mockCreate.mock.calls[0][0].messages as Array<{
+      role: string
+      content: string
+    }>
+    const assistant = msgs.find((m) => m.role === 'assistant')
+    expect(assistant?.content.length).toBe(1500)
+  })
+
+  it('keeps recent history even when the system prompt exceeds the conversation budget', async () => {
+    mockGetChatbotData.mockResolvedValue({
+      bio: 'B'.repeat(12000),
+      prompt: 'P'.repeat(8000),
+    })
+
+    const result = await sendChatMessage({
+      message: 'Follow up question',
+      history: [
+        { role: 'user', content: 'First question about skills' },
+        { role: 'assistant', content: 'First answer about TypeScript' },
+      ],
+      sessionId: 'sess-history-kept',
+    })
+
+    expect(result.ok).toBe(true)
+    const msgs = mockCreate.mock.calls[0][0].messages as Array<{
+      role: string
+      content: string
+    }>
+    expect(msgs[0].role).toBe('system')
+    expect(msgs[0].content.length).toBeGreaterThan(10000)
+    expect(msgs.some((m) => m.content.includes('First question about skills'))).toBe(true)
+    expect(msgs.some((m) => m.content.includes('First answer about TypeScript'))).toBe(true)
+    expect(msgs[msgs.length - 1]).toEqual({
+      role: 'user',
+      content: 'Follow up question',
+    })
+  })
+
   it('passes max_tokens to Groq', async () => {
     process.env.CHATBOT_MAX_OUTPUT_TOKENS = '250'
     // Re-importing limits via env — getChatbotLimits reads env at call time

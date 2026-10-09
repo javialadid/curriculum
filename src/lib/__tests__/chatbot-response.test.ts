@@ -1,6 +1,7 @@
 import {
   extractAssistantText,
   finalizeAssistantContent,
+  findLastSentenceEnd,
 } from '../chatbot-response'
 
 describe('finalizeAssistantContent', () => {
@@ -20,6 +21,23 @@ describe('finalizeAssistantContent', () => {
   it('appends the note even when no sentence boundary exists', () => {
     expect(finalizeAssistantContent('Incomplete mid-thought without end', 'length')).toBe(
       'Incomplete mid-thought without end (reply shortened)'
+    )
+  })
+
+  it('does not treat dots inside tokens like Next.js as sentence ends', () => {
+    const truncated = 'They use Next.js and TypeScript for fron'
+    expect(finalizeAssistantContent(truncated, 'length')).toBe(
+      'They use Next.js and TypeScript for fron (reply shortened)'
+    )
+  })
+
+  it('skips common abbreviations when finding the last sentence end', () => {
+    const truncated = 'Experience includes APIs, e.g. REST and GraphQL, plus more cut'
+    expect(finalizeAssistantContent(truncated, 'length')).toBe(
+      'Experience includes APIs, e.g. REST and GraphQL, plus more cut (reply shortened)'
+    )
+    expect(findLastSentenceEnd('See tools (e.g. linters). Then more')).toBe(
+      'See tools (e.g. linters).'.length - 1
     )
   })
 })
