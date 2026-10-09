@@ -254,7 +254,7 @@ describe('sendChatMessage security and caps', () => {
     delete process.env.UPSTASH_REDIS_REST_URL
     delete process.env.UPSTASH_REDIS_REST_TOKEN
     process.env.CHATBOT_MAX_MESSAGE_LENGTH = '400'
-    process.env.CHATBOT_MAX_OUTPUT_TOKENS = '400'
+    delete process.env.CHATBOT_MAX_OUTPUT_TOKENS
     process.env.CHATBOT_RATE_LIMIT_PER_MINUTE = '100'
     process.env.CHATBOT_RATE_LIMIT_PER_DAY = '100'
     process.env.NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES = '15'
@@ -409,7 +409,35 @@ describe('sendChatMessage security and caps', () => {
     expect(args.model).toBe('openai/gpt-oss-20b')
     expect(args.reasoning_effort).toBe('medium')
     expect(args.include_reasoning).toBe(true)
-    expect(args.max_tokens).toBe(400)
+    expect(args.max_tokens).toBe(1500)
+  })
+
+  it('shortens replies when finish_reason is length and never returns reasoning text', async () => {
+    mockCreate.mockResolvedValueOnce({
+      choices: [
+        {
+          finish_reason: 'length',
+          message: {
+            content:
+              'Core skills include TypeScript and React. They also have experi',
+            reasoning: 'I should list only CV skills and not invent others...',
+          },
+        },
+      ],
+    })
+
+    const result = await sendChatMessage({
+      message: 'What are their skills?',
+      history: [],
+      sessionId: 'sess-truncated',
+    })
+
+    expect(result).toEqual({
+      ok: true,
+      content:
+        'Core skills include TypeScript and React. (reply shortened)',
+    })
+    expect(result.ok && result.content).not.toContain('I should list only')
   })
 
   it('omits reasoning_effort for a non-gpt-oss model', async () => {

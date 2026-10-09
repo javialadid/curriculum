@@ -28,7 +28,7 @@ NEXT_PUBLIC_CHATBOT_MAX_EXCHANGES=15
 CHATBOT_MAX_MESSAGE_LENGTH=400
 CHATBOT_MAX_CONVERSATION_LENGTH=10000
 CHATBOT_MAX_HISTORY_MESSAGES=6
-CHATBOT_MAX_OUTPUT_TOKENS=400
+CHATBOT_MAX_OUTPUT_TOKENS=1500
 CHATBOT_RATE_LIMIT_PER_MINUTE=5
 CHATBOT_RATE_LIMIT_PER_DAY=30
 # Optional UI mirror of message length (defaults to 400)
@@ -131,7 +131,7 @@ The chatbot is automatically enabled when you provide a `GROQ_API_KEY` in your e
 - **`CHATBOT_MAX_MESSAGE_LENGTH`**: Maximum characters per user message (default: 400)
 - **`CHATBOT_MAX_CONVERSATION_LENGTH`**: Maximum total characters for the prompt+history before truncation (default: 10000)
 - **`CHATBOT_MAX_HISTORY_MESSAGES`**: Max prior user/assistant messages sent to the model (default: 6)
-- **`CHATBOT_MAX_OUTPUT_TOKENS`**: Cap on model completion tokens (default: 400)
+- **`CHATBOT_MAX_OUTPUT_TOKENS`**: Cap on model completion tokens (default: 1500). On gpt-oss models, reasoning tokens count toward this budget.
 - **`CHATBOT_RATE_LIMIT_PER_MINUTE`**: Per-IP requests per minute (default: 5)
 - **`CHATBOT_RATE_LIMIT_PER_DAY`**: Per-IP requests per day (default: 30)
 - **`UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`**: Optional. When both are set, rate limits use Upstash Redis REST (durable across serverless instances). Otherwise an in-memory limiter is used (best-effort per instance).

@@ -14,6 +14,10 @@ import {
   getClientIp,
   sanitizeClientHistory,
 } from '@/lib/chatbot-request'
+import {
+  extractAssistantText,
+  finalizeAssistantContent,
+} from '@/lib/chatbot-response'
 import type {
   ClientChatMessage,
   SendChatMessageInput,
@@ -286,15 +290,17 @@ export async function sendChatMessage(
       max_tokens: limits.maxOutputTokens,
       ...(model.startsWith('openai/gpt-oss')
         ? {
+            // Keep chain-of-thought on message.reasoning, not in content.
             include_reasoning: true,
             ...(reasoningEffort !== undefined ? { reasoning_effort: reasoningEffort } : {}),
           }
         : {}),
     })
 
-    const responseContent = completion.choices[0]?.message?.content
-
-    if (!responseContent) {
+    const choice = completion.choices[0]
+    const rawContent = extractAssistantText(choice?.message ?? {})
+    // Never surface message.reasoning — only content is user-facing.
+    if (!rawContent.trim()) {
       console.error('GROQ API returned empty response')
       return {
         ok: false,
@@ -302,6 +308,8 @@ export async function sendChatMessage(
         message: "Sorry, I couldn't generate a response.",
       }
     }
+
+    const responseContent = finalizeAssistantContent(rawContent, choice?.finish_reason)
 
     return { ok: true, content: responseContent }
   } catch (error) {

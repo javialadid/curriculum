@@ -1,6 +1,7 @@
 import {
   SKILLS_GROUNDING_INSTRUCTION,
   GUARDRAIL_INSTRUCTIONS,
+  CONCISE_ANSWER_INSTRUCTION,
   buildChatbotSystemMessage,
   buildResumeContext,
 } from '../chatbot-system-prompt'
@@ -43,6 +44,13 @@ describe('buildChatbotSystemMessage', () => {
     expect(systemMessage).toMatch(/answer truthfully that you are/i)
     expect(systemMessage).not.toMatch(/Never say you are an AI/i)
     expect(systemMessage).toMatch(/neutrally and briefly/i)
+  })
+
+  it('asks for concise answers by default', () => {
+    const systemMessage = buildChatbotSystemMessage('Sample bio', '')
+
+    expect(systemMessage).toContain(CONCISE_ANSWER_INSTRUCTION)
+    expect(systemMessage).toMatch(/120 words/i)
   })
 })
 
