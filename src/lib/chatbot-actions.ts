@@ -23,19 +23,7 @@ import type {
   SendChatMessageInput,
   SendChatResult,
 } from '@/lib/chatbot-actions-types'
-
-/** Truncate at the last whitespace within maxChars; hard-cut if no space found. */
-export function truncateAtWordBoundary(text: string, maxChars: number): string {
-  if (text.length <= maxChars) {
-    return text
-  }
-  const sliced = text.slice(0, maxChars)
-  const lastSpace = sliced.lastIndexOf(' ')
-  if (lastSpace > 0) {
-    return sliced.slice(0, lastSpace).trimEnd()
-  }
-  return sliced
-}
+import { truncateAtWordBoundary } from '@/lib/chatbot-limits'
 
 export type {
   ClientChatMessage,

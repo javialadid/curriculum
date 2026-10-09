@@ -8,7 +8,7 @@ interface CookieConsentProps {
 }
 
 export function CookieConsent({ gaEnabled = false }: CookieConsentProps) {
-  // Defer localStorage/sessionStorage reads until after mount to avoid
+  // Start with SSR-safe defaults; read storage after mount to avoid
   // React hydration mismatch (#418) for returning visitors.
   const [showBanner, setShowBanner] = useState(false)
   const [hasConsented, setHasConsented] = useState(false)
@@ -17,6 +17,7 @@ export function CookieConsent({ gaEnabled = false }: CookieConsentProps) {
 
   useEffect(() => {
     if (!gaEnabled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional post-mount storage read
       setReady(true)
       return
     }

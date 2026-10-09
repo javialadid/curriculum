@@ -45,8 +45,8 @@ import {
   sendChatMessage,
   resolveGroqModel,
   resolveReasoningEffort,
-  truncateAtWordBoundary,
 } from '../chatbot-actions'
+import { truncateAtWordBoundary } from '../chatbot-limits'
 import { sanitizeClientHistory, checkOriginAllowed } from '../chatbot-request'
 import {
   MemoryRateLimiter,
