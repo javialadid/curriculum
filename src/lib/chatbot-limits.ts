@@ -14,15 +14,21 @@ export const DEFAULT_MAX_EXCHANGES = 15
 export const DEFAULT_RATE_LIMIT_PER_MINUTE = 5
 export const DEFAULT_RATE_LIMIT_PER_DAY = 30
 
-/** Truncate at the last whitespace within maxChars; hard-cut if no space found. */
+/** Truncate at the last whitespace within maxChars; hard-cut if no whitespace found. */
 export function truncateAtWordBoundary(text: string, maxChars: number): string {
   if (text.length <= maxChars) {
     return text
   }
   const sliced = text.slice(0, maxChars)
-  const lastSpace = sliced.lastIndexOf(' ')
-  if (lastSpace > 0) {
-    return sliced.slice(0, lastSpace).trimEnd()
+  let lastWs = -1
+  for (let i = sliced.length - 1; i >= 0; i--) {
+    if (/\s/.test(sliced[i]!)) {
+      lastWs = i
+      break
+    }
+  }
+  if (lastWs > 0) {
+    return sliced.slice(0, lastWs).trimEnd()
   }
   return sliced
 }

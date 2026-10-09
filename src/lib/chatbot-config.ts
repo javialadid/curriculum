@@ -14,8 +14,15 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   if (raw === undefined || raw === '') {
     return fallback
   }
-  const parsed = parseInt(raw, 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+  const parsed = Number(raw)
+  // Require a plain positive integer string — reject '1.5e3', '12abc', floats.
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return fallback
+  }
+  if (!/^\d+$/.test(raw.trim())) {
+    return fallback
+  }
+  return parsed
 }
 
 export function getChatbotLimits() {
